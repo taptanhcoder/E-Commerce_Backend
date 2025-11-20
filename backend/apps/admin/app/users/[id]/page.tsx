@@ -149,10 +149,6 @@ const SingleUserPage = () => {
               Joined on 2025.01.01
             </p>
           </div>
-          {/* CARD LIST CONTAINER */}
-          <div className="bg-primary-foreground p-4 rounded-lg">
-            <CardList title="Recent Transactions" />
-          </div>
         </div>
         {/* RIGHT */}
         <div className="w-full xl:w-2/3 space-y-6">
