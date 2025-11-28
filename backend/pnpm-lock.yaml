@@ -172,6 +172,9 @@ importers:
 
   apps/payment-service:
     dependencies:
+      '@hono/clerk-auth':
+        specifier: ^3.0.3
+        version: 3.0.3(hono@4.10.6)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@hono/node-server':
         specifier: ^1.19.6
         version: 1.19.6(hono@4.10.6)
@@ -584,6 +587,12 @@ packages:
 
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
+
+  '@hono/clerk-auth@3.0.3':
+    resolution: {integrity: sha512-N671mw3ulvxqxY8ou8D8ojVT7EKljXE6RjdC2egWExMcrQAglMSTvqvU096MbOT5zvWtc8QMo3SKiyTXn30BrQ==}
+    engines: {node: '>=16.x.x'}
+    peerDependencies:
+      hono: '>=3.0.0'
 
   '@hono/node-server@1.19.6':
     resolution: {integrity: sha512-Shz/KjlIeAhfiuE93NDKVdZ7HdBVLQAfdbaXEaoAVO3ic9ibRSLGIQGkcBbFyuLr+7/1D5ZCINM8B+6IvXeMtw==}
@@ -3506,6 +3515,15 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
 
   '@floating-ui/utils@0.2.10': {}
+
+  '@hono/clerk-auth@3.0.3(hono@4.10.6)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@clerk/backend': 2.24.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@clerk/types': 4.101.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      hono: 4.10.6
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   '@hono/node-server@1.19.6(hono@4.10.6)':
     dependencies:
