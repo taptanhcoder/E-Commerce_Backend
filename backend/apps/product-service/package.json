@@ -12,14 +12,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@clerk/express": "^1.7.53",
+    "@clerk/express": "^1.7.30",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.0.3",
+    "@repo/product-db": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@repo/types": "workspace:*",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.5",
-    "@types/node": "^24.10.1"
+    "@types/express": "^5.0.3"
   }
 }
