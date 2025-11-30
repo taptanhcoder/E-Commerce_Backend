@@ -4,16 +4,40 @@ import {prisma, Prisma} from "@repo/product-db"
 
 export const createProduct = async (req:Request,res:Response) =>{
 
-    const data: Prisma.ProductCreateInput =req.body;
+  const data: Prisma.ProductCreateInput = req.body;
 
-    const product = await prisma.product.create({data});
-    res.status(201).json(product);
-    
+  const { colors, images } = data;
+  if (!colors || !Array.isArray(colors) || colors.length === 0) {
+    return res.status(400).json({ message: "colors array is required!" });
+  }
+
+  if (!images || typeof images !== "object") {
+    return res.status(400).json({ message: "images object is required!" });
+  }
+
+  const missingColors = colors.filter((color) => !(color in images));
+
+  if (missingColors.length > 0) {
+    return res
+      .status(400)
+      .json({ message: "missing images for colors!", missingColors });
+  }
+
+  const product = await prisma.product.create({ data });
+  res.status(201).json(product);
 
 };
 
-export const updateProduct = async (req:Request,res:Response) =>{
+export const updateProduct = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const data: Prisma.ProductUpdateInput = req.body;
 
+  const updatedProduct = await prisma.product.update({
+    where: { id: Number(id) },
+    data,
+  });
+
+  return res.status(200).json(updatedProduct);
 };
 
 export const deleteProduct = async (req:Request,res:Response) =>{
@@ -61,9 +85,18 @@ export const getProducts = async (req: Request, res: Response) => {
 export const getProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  const productId = Number(id);
+  if (Number.isNaN(productId)) {
+    return res.status(400).json({ message: "Invalid product id" });
+  }
+
   const product = await prisma.product.findUnique({
-    where: { id: Number(id) },
+    where: { id: productId },
   });
+
+  if (!product) {
+    return res.status(404).json({ message: "Product not found" });
+  }
 
   return res.status(200).json(product);
 };
