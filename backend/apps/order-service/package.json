@@ -6,12 +6,14 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --env-file=.env --watch src/index.ts",
+    "seed:orders": "tsx src/scripts/seedOrders.ts",
     "check-types": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.10.1",
     "tsx": "^4.20.6",
@@ -19,6 +21,9 @@
   },
   "dependencies": {
     "@clerk/fastify": "^2.6.5",
+    "@repo/order-db": "workspace:*",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
     "fastify": "^5.6.2"
   }
 }

@@ -6,7 +6,11 @@
   "scripts": {
     "check-types": "tsc --noEmit"
   },
-
+  "dependencies": {
+    "@repo/product-db": "workspace:*",
+    "@repo/order-db": "workspace:*",
+    "zod": "^4.1.9"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.3.1"
