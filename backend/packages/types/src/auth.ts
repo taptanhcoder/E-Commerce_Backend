@@ -8,20 +8,20 @@ export interface CustomJwtSessionClaims {
 
 export const UserFormSchema = z.object({
   firstName: z
-    .string({ message: "First name is required!" })
-    .min(2, { message: "First name must be at least 2 characters!" })
+    .string({ message: "first name is required !" })
+    .min(2, { message: "first name must be at least 2 characters !" })
     .max(50),
   lastName: z
-    .string({ message: "Last name is required!" })
-    .min(2, { message: "Last name must be at least 2 characters!" })
+    .string({ message: "last name is required !" })
+    .min(2, { message: "last name must be at least 2 characters !" })
     .max(50),
   username: z
-    .string({ message: "Username is required!" })
-    .min(2, { message: "Username must be at least 2 characters!" })
+    .string({ message: "username is required !" })
+    .min(2, { message: "username must be at least 2 characters !" })
     .max(50),
-  emailAddress: z.array(z.string({ message: "Email address is required!" })),
+  emailAddress: z.array(z.string({ message: "email address is required !" })),
   password: z
-    .string({ message: "Password is required!" })
-    .min(8, { message: "Password must be at least 8 characters!" })
+    .string({ message: "password is required !" })
+    .min(8, { message: "password must be at least 8 characters !" })
     .max(50),
 });

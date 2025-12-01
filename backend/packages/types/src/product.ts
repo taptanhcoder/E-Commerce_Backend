@@ -94,9 +94,9 @@ export type CategoryType = Category;
 
 export const CategoryFormSchema = z.object({
   name: z
-    .string({ message: "Name is Required!" })
-    .min(1, { message: "Name is Required!" }),
+    .string({ message: "name is Required!" })
+    .min(1, { message: "name is Required!" }),
   slug: z
-    .string({ message: "Slug is Required!" })
-    .min(1, { message: "Slug is Required!" }),
+    .string({ message: "slug is Required!" })
+    .min(1, { message: "slug is Required!" }),
 });

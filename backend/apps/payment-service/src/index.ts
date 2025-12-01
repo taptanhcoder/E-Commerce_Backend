@@ -1,10 +1,12 @@
 import { serve } from '@hono/node-server'
 import { clerkMiddleware, getAuth } from '@hono/clerk-auth'
-import { Hono } from 'hono'
+import { Hono } from 'hono';
+import { cors } from "hono/cors";
 import { shouldBeUser } from './middleware/authMiddleware.js'
 
-const app = new Hono()
-app.use('*', clerkMiddleware())
+const app = new Hono();
+app.use("*", clerkMiddleware());
+app.use("*", cors({ origin: ["http://localhost:3002"] }));
 
 app.get('/health', (c) => {
   return c.json({
@@ -13,6 +15,24 @@ app.get('/health', (c) => {
     timestamp: Date.now(),
   });
 })
+
+
+app.get("/pay",shouldBeUser , async(c)=>{
+  
+  const {products}=await c.req.json()
+  const totalPrice = await Promise.all(
+    products.map(async (product:any)=>{
+      const productInDb:any = await fetch(
+        `http://localhost:8000/product/${product.id}`
+      );
+      return productInDb.price * product.quantity;
+    })
+  )
+
+  return c.json({
+    message:"payment service is authenticated !",userId:c.get("userId")
+  });
+});
 
 app.get('/test',shouldBeUser, (c) => {
 
