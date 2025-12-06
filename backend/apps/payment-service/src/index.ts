@@ -2,60 +2,43 @@ import { serve } from '@hono/node-server'
 import { clerkMiddleware, getAuth } from '@hono/clerk-auth'
 import { Hono } from 'hono';
 import { cors } from "hono/cors";
-import { shouldBeUser } from './middleware/authMiddleware.js'
+import sessionRoute from "./routes/session.route.js";
+import { consumer, producer } from "./utils/kafka.js";
+import { runKafkaSubscriptions } from "./utils/subscriptions.js";
+import webhookRoute from "./routes/webhooks.route.js";
 
 const app = new Hono();
 app.use("*", clerkMiddleware());
 app.use("*", cors({ origin: ["http://localhost:3002"] }));
 
-app.get('/health', (c) => {
+app.get("/health", (c) => {
   return c.json({
-    status:"ok",
-    uptime:process.uptime(),
+    status: "ok",
+    uptime: process.uptime(),
     timestamp: Date.now(),
   });
-})
-
-
-app.get("/pay",shouldBeUser , async(c)=>{
-  
-  const {products}=await c.req.json()
-  const totalPrice = await Promise.all(
-    products.map(async (product:any)=>{
-      const productInDb:any = await fetch(
-        `http://localhost:8000/product/${product.id}`
-      );
-      return productInDb.price * product.quantity;
-    })
-  )
-
-  return c.json({
-    message:"payment service is authenticated !",userId:c.get("userId")
-  });
 });
 
-app.get('/test',shouldBeUser, (c) => {
+app.route("/sessions", sessionRoute);
+app.route("/webhooks", webhookRoute);
 
-  return c.json({
-    message: 'payment service is authenticated !',
-    userId:c.get("userId")
-  });
-});
-
-const start = async () =>{
+const start = async () => {
   try {
-    serve({
-      fetch: app.fetch,
-      port: 8002
-    },
-    (info) => {
-      console.log(`payment service is running on post 8002`)
-    }
-  );
-    } catch (error){
-      console.log(error);
-      process.exit(1);
-    }
+    Promise.all([await producer.connect(), await consumer.connect()]);
+    await runKafkaSubscriptions()
+    serve(
+      {
+        fetch: app.fetch,
+        port: 8002,
+      },
+      (info) => {
+        console.log(`payment service is running on port 8002`);
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
 };
 
 start();

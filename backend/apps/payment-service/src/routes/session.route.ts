@@ -15,7 +15,7 @@ sessionRoute.post("/create-checkout-session", shouldBeUser, async (c) => {
       const unitAmount = await getStripeProductPrice(item.id);
       return {
         price_data: {
-          currency: "vnd",
+          currency: "usd",
           product_data: {
             name: item.name,
           },
@@ -36,6 +36,8 @@ sessionRoute.post("/create-checkout-session", shouldBeUser, async (c) => {
         "http://localhost:3002/return?session_id={CHECKOUT_SESSION_ID}",
     });
 
+    console.log(session);
+
     return c.json({ checkoutSessionClientSecret: session.client_secret });
   } catch (error) {
     console.log(error);
@@ -51,6 +53,8 @@ sessionRoute.get("/:session_id", async (c) => {
       expand: ["line_items"],
     }
   );
+
+  console.log(session);
 
   return c.json({
     status: session.status,

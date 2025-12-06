@@ -1,10 +1,10 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
-import { clerkMiddleware, getAuth } from '@clerk/express'
+import { clerkMiddleware, getAuth } from "@clerk/express";
 import { shouldBeUser } from "./middleware/authMiddleware.js";
-import productRouter from "./routes/product.route.js";
-import categoryRouter from "./routes/category.route.js";
-
+import productRouter from "./routes/product.route";
+import categoryRouter from "./routes/category.route";
+import { consumer, producer } from "./utils/kafka.js";
 const app = express();
 app.use(
   cors({
@@ -24,7 +24,7 @@ app.get("/health", (req: Request, res: Response) => {
 });
 
 app.get("/test", shouldBeUser, (req, res) => {
-  res.json({ message: "Product service authenticated", userId: req.userId });
+  res.json({ message: "product service authenticated", userId: req.userId });
 });
 
 app.use("/products", productRouter);
@@ -34,16 +34,19 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.log(err);
   return res
     .status(err.status || 500)
-    .json({ message: err.message || "Inter Server Error!" });
+    .json({ message: err.message || "inter Server error !" });
 });
 
-
-app.listen(8000, () =>{
-  console.log("product service i srunning on port 8000");
-})
-
 const start = async () => {
-
+  try {
+    Promise.all([await producer.connect(), await consumer.connect()]);
+    app.listen(8000, () => {
+      console.log("product service is running on 8000");
+    });
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
 };
 
 start()

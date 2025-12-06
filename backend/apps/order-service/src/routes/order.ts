@@ -13,6 +13,7 @@ export const orderRoute = async (fastify: FastifyInstance) => {
       return reply.send(orders);
     }
   );
+
   fastify.get(
     "/orders",
     { preHandler: shouldBeAdmin },
@@ -22,6 +23,8 @@ export const orderRoute = async (fastify: FastifyInstance) => {
       return reply.send(orders);
     }
   );
+
+  
   fastify.get(
     "/order-chart",
     { preHandler: shouldBeAdmin },
