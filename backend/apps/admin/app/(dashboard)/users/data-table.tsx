@@ -1,3 +1,4 @@
+// backend/apps/admin/app/(dashboard)/users/data-table.tsx
 "use client";
 
 import {
@@ -23,13 +24,13 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "@tanstack/react-query";
-import { User } from "@clerk/nextjs/server";
+import type { User } from "@clerk/nextjs/server";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
-  data: TData[] | undefined | null;
+  data: TData[];
 }
 
 export function DataTable<TData, TValue>({
@@ -39,18 +40,8 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState({});
 
-  // ✅ Bảo vệ: nếu data không phải array thì fallback về []
-  const safeData = Array.isArray(data) ? data : [];
-
-  if (!Array.isArray(data)) {
-    console.warn(
-      "[UsersDataTable] `data` is not an array. Fallback to empty array.",
-      data
-    );
-  }
-
   const table = useReactTable({
-    data: safeData,
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -68,21 +59,37 @@ export function DataTable<TData, TValue>({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const token = await getToken();
+      const token = await getToken({
+        template: process.env.NEXT_PUBLIC_CLERK_JWT_TEMPLATE_NAME,
+      });
+
       const selectedRows = table.getSelectedRowModel().rows;
+
+      if (!selectedRows.length) return;
 
       await Promise.all(
         selectedRows.map(async (row) => {
           const userId = (row.original as User).id;
-          await fetch(
+
+          const res = await fetch(
             `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/users/${userId}`,
             {
               method: "DELETE",
               headers: {
-                Authorization: `Bearer ${token}`,
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
               },
             }
           );
+
+          if (!res.ok) {
+            console.error(
+              "[UsersTable] Failed to delete user:",
+              userId,
+              res.status,
+              res.statusText
+            );
+            throw new Error("Failed to delete one or more users");
+          }
         })
       );
     },
@@ -147,7 +154,10 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center"
+              >
                 No results.
               </TableCell>
             </TableRow>

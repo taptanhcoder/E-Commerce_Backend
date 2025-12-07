@@ -11,20 +11,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 import { ProductType } from "@repo/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { getProductImageUrl } from "@/lib/image";
+
+const getProductImageUrl = (product: ProductType): string | null => {
+  const images = product.images as Record<string, unknown> | undefined;
+  if (!images) return null;
+
+  const colors = Array.isArray(product.colors) ? product.colors : [];
+
+  // Ưu tiên theo màu đầu tiên
+  for (const color of colors) {
+    const raw = images[color as string];
+    if (typeof raw === "string") {
+      const value = raw.trim();
+      if (value.length > 0) {
+        return value;
+      }
+    }
+  }
+
+  // Fallback: lấy value hợp lệ đầu tiên
+  const first = Object.values(images).find(
+    (raw) => typeof raw === "string" && raw.trim().length > 0
+  ) as string | undefined;
+
+  return first ?? null;
+};
 
 export const columns: ColumnDef<ProductType>[] = [
   {
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        onCheckedChange={(value) =>
+          table.toggleAllPageRowsSelected(!!value)
+        }
         checked={
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -55,9 +80,7 @@ export const columns: ColumnDef<ProductType>[] = [
               className="rounded-full object-cover"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
-              No image
-            </div>
+            <div className="w-full h-full rounded-full bg-muted" />
           )}
         </div>
       );
@@ -73,7 +96,9 @@ export const columns: ColumnDef<ProductType>[] = [
       return (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
         >
           Price
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -109,7 +134,9 @@ export const columns: ColumnDef<ProductType>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href={`/products/${product.id}`}>View product</Link>
+              <Link href={`/products/${product.id}`}>
+                View product
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,3 +1,4 @@
+// backend/apps/admin/components/AddUser.tsx
 "use client";
 
 import {
@@ -48,7 +49,10 @@ const AddUser = () => {
 
   const mutation = useMutation({
     mutationFn: async (data: z.infer<typeof UserFormSchema>) => {
-      const token = await getToken();
+      const token = await getToken({
+        template: process.env.NEXT_PUBLIC_CLERK_JWT_TEMPLATE_NAME,
+      });
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/users`,
         {
@@ -56,16 +60,23 @@ const AddUser = () => {
           body: JSON.stringify(data),
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
       );
+
       if (!res.ok) {
+        console.error(
+          "[AddUser] Failed to create user:",
+          res.status,
+          res.statusText
+        );
         throw new Error("Failed to create user!");
       }
     },
     onSuccess: () => {
       toast.success("User created successfully");
+      form.reset();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -80,7 +91,9 @@ const AddUser = () => {
           <Form {...form}>
             <form
               className="space-y-8"
-              onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
+              onSubmit={form.handleSubmit((data) =>
+                mutation.mutate(data)
+              )}
             >
               <FormField
                 control={form.control}
@@ -91,7 +104,9 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>Enter user first name.</FormDescription>
+                    <FormDescription>
+                      Enter user first name.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -105,7 +120,9 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>Enter user last name.</FormDescription>
+                    <FormDescription>
+                      Enter user last name.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -119,7 +136,9 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>Enter username.</FormDescription>
+                    <FormDescription>
+                      Enter username.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -132,8 +151,12 @@ const AddUser = () => {
                     <FormLabel>Email Addresses</FormLabel>
                     <FormControl>
                       <Input
-                        {...field}
                         placeholder="email1@gmail.com, email2@gmail.com"
+                        value={
+                          Array.isArray(field.value)
+                            ? field.value.join(", ")
+                            : ""
+                        }
                         onChange={(e) => {
                           const emails = e.target.value
                             .split(",")
@@ -159,7 +182,9 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} type="password" />
                     </FormControl>
-                    <FormDescription>Enter user password.</FormDescription>
+                    <FormDescription>
+                      Enter user password.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

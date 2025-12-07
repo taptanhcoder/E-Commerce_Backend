@@ -1,27 +1,20 @@
+// backend/apps/admin/app/(dashboard)/users/page.tsx
 import { auth, type User } from "@clerk/nextjs/server";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 
-type UsersApiResponse =
-  | {
-      data?: User[];
-      totalCount?: number;
-    }
-  | User[];
-
-/**
- * Luôn trả về một mảng User[], kể cả khi API shape thay đổi
- */
-const getData = async (): Promise<User[]> => {
+const getData = async (): Promise<{ data: User[]; totalCount: number }> => {
   const { getToken } = await auth();
-  const token = await getToken();
+  const token = await getToken({
+    template: process.env.CLERK_JWT_TEMPLATE_NAME,
+  });
 
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/users`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
       }
@@ -33,41 +26,28 @@ const getData = async (): Promise<User[]> => {
         res.status,
         res.statusText
       );
-      return [];
+      return { data: [], totalCount: 0 };
     }
 
-    const json = (await res.json()) as UsersApiResponse;
-
-    // Trường hợp API trả về mảng thuần User[]
-    if (Array.isArray(json)) {
-      return json;
-    }
-
-    // Trường hợp API dạng { data: User[], totalCount }
-    if (Array.isArray(json.data)) {
-      return json.data;
-    }
-
-    console.warn(
-      "[UsersPage] Unexpected users response shape, fallback to empty array:",
-      json
-    );
-    return [];
+    const data = await res.json();
+    return data;
   } catch (err) {
-    console.error("[UsersPage] Error fetching users:", err);
-    return [];
+    console.error(
+      "[UsersPage] Network error while fetching users:",
+      err
+    );
+    return { data: [], totalCount: 0 };
   }
 };
 
 const UsersPage = async () => {
-  const users = await getData();
-
+  const res = await getData();
   return (
     <div className="">
       <div className="mb-8 px-4 py-2 bg-secondary rounded-md">
         <h1 className="font-semibold">All Users</h1>
       </div>
-      <DataTable columns={columns} data={users} />
+      <DataTable columns={columns} data={res.data} />
     </div>
   );
 };

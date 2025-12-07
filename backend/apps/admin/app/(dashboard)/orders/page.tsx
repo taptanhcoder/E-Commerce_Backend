@@ -1,24 +1,42 @@
+// backend/apps/admin/app/(dashboard)/orders/page.tsx
 import { auth } from "@clerk/nextjs/server";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { OrderType } from "@repo/types";
 
 const getData = async (): Promise<OrderType[]> => {
+  const { getToken } = await auth();
+  const token = await getToken({
+    template: process.env.CLERK_JWT_TEMPLATE_NAME,
+  });
+
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_ORDER_SERVICE_URL}/orders`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        cache: "no-store",
       }
     );
-    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(
+        "[OrdersPage] Failed to fetch orders:",
+        res.status,
+        res.statusText
+      );
+      return [];
+    }
+
+    const data = (await res.json()) as OrderType[];
     return data;
   } catch (err) {
-    console.log(err);
+    console.error(
+      "[OrdersPage] Network error while fetching orders:",
+      err
+    );
     return [];
   }
 };

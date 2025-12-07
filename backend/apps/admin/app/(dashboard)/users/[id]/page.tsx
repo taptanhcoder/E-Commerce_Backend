@@ -1,3 +1,4 @@
+// backend/apps/admin/app/(dashboard)/users/[id]/page.tsx
 import CardList from "@/components/CardList";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,24 +21,41 @@ import { Button } from "@/components/ui/button";
 import EditUser from "@/components/EditUser";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AppLineChart from "@/components/AppLineChart";
-import { auth, User } from "@clerk/nextjs/server";
+import { auth, type User } from "@clerk/nextjs/server";
 
 const getData = async (id: string): Promise<User | null> => {
   const { getToken } = await auth();
-  const token = await getToken();
+  const token = await getToken({
+    template: process.env.CLERK_JWT_TEMPLATE_NAME,
+  });
+
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/users/${id}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        cache: "no-store",
       }
     );
-    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(
+        "[SingleUserPage] Failed to fetch user:",
+        res.status,
+        res.statusText
+      );
+      return null;
+    }
+
+    const data = (await res.json()) as User;
     return data;
   } catch (err) {
-    console.log(err);
+    console.error(
+      "[SingleUserPage] Network error while fetching user:",
+      err
+    );
     return null;
   }
 };
@@ -45,9 +63,9 @@ const getData = async (id: string): Promise<User | null> => {
 const SingleUserPage = async ({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) => {
-  const { id } = await params;
+  const { id } = params;
   const data = await getData(id);
 
   if (!data) {
@@ -68,7 +86,9 @@ const SingleUserPage = async ({
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>
-              {data?.firstName + " " + data?.lastName || data?.username || "-"}
+              {data?.firstName + " " + data?.lastName ||
+                data?.username ||
+                "-"}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
@@ -105,8 +125,8 @@ const SingleUserPage = async ({
                 <HoverCardContent>
                   <h1 className="font-bold mb-2">Admin</h1>
                   <p className="text-sm text-muted-foreground">
-                    Admin users have access to all features and can manage
-                    users.
+                    Admin users have access to all features and can
+                    manage users.
                   </p>
                 </HoverCardContent>
               </HoverCard>
@@ -157,9 +177,7 @@ const SingleUserPage = async ({
                   "-"}
               </h1>
             </div>
-            <p className="text-sm text-muted-foreground">
-
-            </p>
+            <p className="text-sm text-muted-foreground"></p>
           </div>
           {/* INFORMATION CONTAINER */}
           <div className="bg-primary-foreground p-4 rounded-lg">
@@ -189,15 +207,21 @@ const SingleUserPage = async ({
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Email:</span>
-                <span>{data.emailAddresses[0]?.emailAddress || "-"}</span>
+                <span>
+                  {data.emailAddresses[0]?.emailAddress || "-"}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Phone:</span>
-                <span>{data.phoneNumbers[0]?.phoneNumber || "-"}</span>
+                <span>
+                  {data.phoneNumbers[0]?.phoneNumber || "-"}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Role:</span>
-                <span>{String(data.publicMetadata?.role) || "user"}</span>
+                <span>
+                  {String(data.publicMetadata?.role) || "user"}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Status:</span>
@@ -205,7 +229,8 @@ const SingleUserPage = async ({
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              Joined on {new Date(data.createdAt).toLocaleDateString("en-US")}
+              Joined on{" "}
+              {new Date(data.createdAt).toLocaleDateString("en-US")}
             </p>
           </div>
         </div>

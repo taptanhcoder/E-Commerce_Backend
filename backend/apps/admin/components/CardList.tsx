@@ -4,16 +4,50 @@ import { Card, CardContent, CardFooter, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { OrderType, ProductsType } from "@repo/types";
 import { auth } from "@clerk/nextjs/server";
-import { getProductImageUrl } from "@/lib/image";
+
+type ProductItem = ProductsType[number];
+
+const getProductImageUrl = (item: ProductItem): string | null => {
+  const images = item.images as Record<string, unknown> | undefined;
+  if (!images) return null;
+
+  const colors = Array.isArray(item.colors) ? item.colors : [];
+
+  // Ưu tiên lấy theo màu đầu tiên trong danh sách colors
+  for (const color of colors) {
+    const raw = images[color as string];
+    if (typeof raw === "string") {
+      const value = raw.trim();
+      if (value.length > 0) {
+        return value;
+      }
+    }
+  }
+
+  // Fallback: lấy value hợp lệ đầu tiên trong images
+  const first = Object.values(images).find(
+    (raw) => typeof raw === "string" && raw.trim().length > 0
+  ) as string | undefined;
+
+  return first ?? null;
+};
 
 const CardList = async ({ title }: { title: string }) => {
   let products: ProductsType = [];
   let orders: OrderType[] = [];
 
+  const { getToken } = await auth();
+  const token = await getToken({
+    template: process.env.CLERK_JWT_TEMPLATE_NAME,
+  });
+
   if (title === "Popular Products") {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL}/products?limit=5&popular=true`
+        `${process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL}/products?limit=5&popular=true`,
+        {
+          cache: "no-store",
+        }
       );
 
       if (!res.ok) {
@@ -26,12 +60,12 @@ const CardList = async ({ title }: { title: string }) => {
         products = await res.json();
       }
     } catch (error) {
-      console.error("[CardList] Network error while fetching products:", error);
+      console.error(
+        "[CardList] Network error while fetching popular products:",
+        error
+      );
     }
   } else {
-    const { getToken } = await auth();
-    const token = await getToken();
-
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_ORDER_SERVICE_URL}/orders?limit=5`,
@@ -39,6 +73,7 @@ const CardList = async ({ title }: { title: string }) => {
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
+          cache: "no-store",
         }
       );
 
@@ -52,7 +87,10 @@ const CardList = async ({ title }: { title: string }) => {
         orders = await res.json();
       }
     } catch (error) {
-      console.error("[CardList] Network error while fetching orders:", error);
+      console.error(
+        "[CardList] Network error while fetching latest orders:",
+        error
+      );
     }
   }
 
@@ -69,22 +107,18 @@ const CardList = async ({ title }: { title: string }) => {
                   key={item.id}
                   className="flex-row items-center justify-between gap-4 p-4"
                 >
-                  {/* Ảnh hoặc placeholder nếu không có ảnh */}
-                  {imageUrl ? (
-                    <div className="w-12 h-12 rounded-sm relative overflow-hidden">
+                  <div className="w-12 h-12 rounded-sm relative overflow-hidden">
+                    {imageUrl ? (
                       <Image
                         src={imageUrl}
                         alt={item.name}
                         fill
                         className="object-cover"
                       />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-sm bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
-                      No image
-                    </div>
-                  )}
-
+                    ) : (
+                      <div className="w-full h-full bg-muted" />
+                    )}
+                  </div>
                   <CardContent className="flex-1 p-0">
                     <CardTitle className="text-sm font-medium">
                       {item.name}
@@ -105,7 +139,9 @@ const CardList = async ({ title }: { title: string }) => {
                   </CardTitle>
                   <Badge variant="secondary">{item.status}</Badge>
                 </CardContent>
-                <CardFooter className="p-0">${item.amount / 100}</CardFooter>
+                <CardFooter className="p-0">
+                  ${item.amount / 100}
+                </CardFooter>
               </Card>
             ))}
       </div>
