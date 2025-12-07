@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -12,20 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { OrderType } from "@repo/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 
-export type Payment = {
-  id: string;
-  amount: number;
-  fullName: string;
-  userId: string;
-  email: string;
-  status: "pending" | "processing" | "success" | "failed";
-};
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<OrderType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -45,8 +37,8 @@ export const columns: ColumnDef<Payment>[] = [
     ),
   },
   {
-    accessorKey: "fullName",
-    header: "User",
+    accessorKey: "_id",
+    header: "ID",
   },
   {
     accessorKey: "email",
@@ -90,7 +82,7 @@ export const columns: ColumnDef<Payment>[] = [
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
-      }).format(amount);
+      }).format(amount/100);
 
       return <div className="text-right font-medium">{formatted}</div>;
     },
@@ -98,7 +90,7 @@ export const columns: ColumnDef<Payment>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const payment = row.original;
+      const order = row.original;
 
       return (
         <DropdownMenu>
@@ -111,15 +103,15 @@ export const columns: ColumnDef<Payment>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
+              onClick={() => navigator.clipboard.writeText(order._id)}
             >
-              Copy payment ID
+              Copy order ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href={`/users/${payment.userId}`}>View customer</Link>
+              <Link href={`/users/${order.userId}`}>View customer</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem>View order details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

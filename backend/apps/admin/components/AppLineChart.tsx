@@ -4,13 +4,15 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 
 const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
+  { month: "January", total: 186, successful: 80 },
+  { month: "February", total: 305, successful: 200 },
+  { month: "March", total: 237, successful: 120 },
+  { month: "April", total: 173, successful: 100 },
+  { month: "May", total: 209, successful: 130 },
+  { month: "June", total: 214, successful: 140 },
 ];
+
+
 const chartConfig = {
   desktop: {
     label: "Desktop",
