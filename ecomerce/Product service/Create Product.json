@@ -1,0 +1,25 @@
+{
+  "name": "Create Product",
+  "request": {
+    "type": "http",
+    "url": "{{PRODUCT_SERVICE_URL}}/products",
+    "scripts": {
+      "preRequest": "",
+      "postResponse": ""
+    },
+    "method": "POST",
+    "queryParams": [],
+    "headers": [],
+    "body": "{\n  \"name\": \"Áo thun nam basic\",\n  \"shortDescription\": \"Áo thun cotton 100%, form regular\",\n  \"description\": \"Áo thun nam chất liệu cotton 100%, thấm hút mồ hôi tốt, phù hợp mặc hằng ngày. Co giãn 4 chiều, may chắc chắn.\",\n  \"price\": 199000,\n  \"sizes\": [\"S\", \"M\", \"L\", \"XL\"],\n  \"colors\": [\"white\", \"black\", \"navy\"],\n  \"images\": {\n    \"thumbnail\": \"https://example.com/images/products/men-tshirt-basic-thumb.jpg\",\n    \"gallery\": [\n      \"https://example.com/images/products/men-tshirt-basic-1.jpg\",\n      \"https://example.com/images/products/men-tshirt-basic-2.jpg\",\n      \"https://example.com/images/products/men-tshirt-basic-3.jpg\"\n    ]\n  },\n  \"categorySlug\": \"men-tshirt\"\n}\n",
+    "bodyContainer": {
+      "text": "{\n  \"name\": \"Áo thun nam basic\",\n  \"shortDescription\": \"Áo thun cotton 100%, form regular\",\n  \"description\": \"Áo thun nam chất liệu cotton 100%, thấm hút mồ hôi tốt, phù hợp mặc hằng ngày. Co giãn 4 chiều, may chắc chắn.\",\n  \"price\": 199000,\n  \"sizes\": [\"S\", \"M\", \"L\", \"XL\"],\n  \"colors\": [\"white\", \"black\", \"navy\"],\n  \"images\": {\n    \"thumbnail\": \"https://example.com/images/products/men-tshirt-basic-thumb.jpg\",\n    \"gallery\": [\n      \"https://example.com/images/products/men-tshirt-basic-1.jpg\",\n      \"https://example.com/images/products/men-tshirt-basic-2.jpg\",\n      \"https://example.com/images/products/men-tshirt-basic-3.jpg\"\n    ]\n  },\n  \"categorySlug\": \"men-tshirt\"\n}\n",
+      "form": [],
+      "multipartForm": []
+    },
+    "contentType": "application/json",
+    "auth": {
+      "currentAuthType": "INHERIT",
+      "authConfigStore": {}
+    }
+  }
+}

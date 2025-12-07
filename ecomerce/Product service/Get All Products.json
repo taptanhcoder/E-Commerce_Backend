@@ -1,0 +1,20 @@
+{
+  "name": "Get All Products",
+  "request": {
+    "type": "http",
+    "url": "{{PRODUCT_SERVICE_URL}}/products/test",
+    "scripts": {
+      "preRequest": "",
+      "postResponse": ""
+    },
+    "method": "GET",
+    "queryParams": [],
+    "headers": [],
+    "body": null,
+    "contentType": "text/plain",
+    "auth": {
+      "currentAuthType": "INHERIT",
+      "authConfigStore": {}
+    }
+  }
+}
