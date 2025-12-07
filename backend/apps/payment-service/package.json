@@ -1,0 +1,25 @@
+{
+  "name": "payment-service",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx --env-file=.env --watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/clerk-auth": "^3.0.3",
+    "@hono/node-server": "^1.19.6",
+    "hono": "^4.10.6",
+    "ngrok": "5.0.0-beta.2",
+    "stripe": "^18.5.0",
+    "@repo/kafka": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/types": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^20.11.17",
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.3"
+  }
+}
