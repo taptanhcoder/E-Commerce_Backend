@@ -1,9 +1,10 @@
 import Fastify from "fastify";
-import { clerkPlugin, getAuth } from "@clerk/fastify";
+import { clerkPlugin } from "@clerk/fastify";
 import { shouldBeUser } from "./middleware/authMiddleware.js";
 import { orderRoute } from "./routes/order.js";
 import { connectOrderDB } from "@repo/order-db";
-import { consumer, producer } from "./utils/kafka.js";;
+import { consumer, producer } from "./utils/kafka.js";
+import { runKafkaSubscriptions } from "./utils/subscriptions.js";
 
 const fastify = Fastify({ logger: true });
 
@@ -28,11 +29,19 @@ fastify.register(orderRoute);
 
 const start = async () => {
   try {
-    Promise.all([
-      await connectOrderDB(),
-      await producer.connect(),
-      await consumer.connect(),
+    await Promise.all([
+      connectOrderDB(),
+      producer.connect(),
+      consumer.connect(),
     ]);
+
+    // Không await để Kafka consumer chạy song song, không block server
+    runKafkaSubscriptions().catch((err) => {
+      fastify.log.error(
+        { err },
+        "[order-service] Kafka subscriptions failed to start"
+      );
+    });
 
     await fastify.listen({ port: 8001 });
     console.log("Order service is running on port 8001");
@@ -41,4 +50,5 @@ const start = async () => {
     process.exit(1);
   }
 };
+
 start();
