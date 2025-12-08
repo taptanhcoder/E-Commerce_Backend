@@ -1,7 +1,8 @@
+# .github/workflows/deployment_ecom-product-service.yml
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy product-service to Azure Web App - ecom-product-service
+name: Build and deploy Node.js app to Azure Web App - ecom-product-service
 
 on:
   push:
@@ -13,46 +14,47 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # required for actions/checkout
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up PNPM
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
-          cache: "pnpm"
+          node-version: '20.x'
 
-      # Cài deps cho toàn bộ monorepo (để backend apps dùng được @repo/kafka, @repo/types, ...)
-      - name: Install dependencies (pnpm workspace)
-        run: pnpm install --frozen-lockfile
+      # ✅ Setup pnpm, KHÔNG set version -> auto đọc từ package.json (pnpm@10.x)
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: true
 
-      # Không cần build riêng vì dịch vụ chạy bằng tsx/ts-node; Azure sẽ chỉ cần source + node_modules
+      # Build riêng service product (nếu có script build)
+      - name: Build product service
+        run: |
+          cd backend/apps/product-service
+          pnpm run build --if-present
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: product-service-app
-          path: .
+          name: ecom-product-service
+          path: backend/apps/product-service
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write   # required for requesting the JWT
-      contents: read    # required for actions/checkout
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: product-service-app
+          name: ecom-product-service
           path: .
 
       - name: Login to Azure
@@ -63,8 +65,9 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_78D6D871EB48456FBFE36A79F6D2CDAD }}
 
       - name: Deploy to Azure Web App
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "ecom-product-service"
-          slot-name: "Production"
-          package: .
+          app-name: 'ecom-product-service'
+          slot-name: 'Production'
+          package: backend/apps/product-service
