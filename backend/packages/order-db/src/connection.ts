@@ -1,4 +1,3 @@
-// backend/packages/order-db/src/connection.ts
 import mongoose from "mongoose";
 
 let isConnected = false;
@@ -13,12 +12,9 @@ export const connectOrderDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URL);
     isConnected = true;
-    console.log(
-      "[Mongo] Connected to MongoDB, db name:",
-      mongoose.connection.name
-    );
+    console.log("Connected to MongoDB");
   } catch (error) {
-    console.log("[Mongo] Connection error:", error);
+    console.log(error);
     throw error;
   }
 };
