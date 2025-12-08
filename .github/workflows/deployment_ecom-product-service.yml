@@ -1,4 +1,3 @@
-# .github/workflows/deployment_ecom-product-service.yml
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
@@ -14,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read # This is required for actions/checkout
 
     steps:
       - name: Checkout repository
@@ -25,37 +24,35 @@ jobs:
         with:
           node-version: '20.x'
 
-      # ✅ Setup pnpm, KHÔNG set version -> auto đọc từ package.json (pnpm@10.x)
+      # ✅ Dùng pnpm, KHÔNG set version để nó tự đọc từ packageManager trong package.json
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          run_install: true
+          run_install: true  # tự pnpm install ở root monorepo
 
-      # Build riêng service product (nếu có script build)
-      - name: Build product service
+      - name: Build and test (pnpm)
         run: |
-          cd backend/apps/product-service
           pnpm run build --if-present
+          pnpm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: ecom-product-service
-          path: backend/apps/product-service
+          name: node-app
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: ecom-product-service
-          path: .
+          name: node-app
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -70,4 +67,4 @@ jobs:
         with:
           app-name: 'ecom-product-service'
           slot-name: 'Production'
-          package: backend/apps/product-service
+          package: .
