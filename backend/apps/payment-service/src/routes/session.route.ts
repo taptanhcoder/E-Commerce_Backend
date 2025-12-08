@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import stripe from "../utils/stripe";
 import { shouldBeUser } from "../middleware/authMiddleware";
 import { CartItemsType } from "@repo/types";
-import { getStripeProductPrice } from "../utils/stripeProduct";
 
 const sessionRoute = new Hono();
 
@@ -10,23 +9,33 @@ sessionRoute.post("/create-checkout-session", shouldBeUser, async (c) => {
   const { cart }: { cart: CartItemsType } = await c.req.json();
   const userId = c.get("userId");
 
-  const lineItems = await Promise.all(
-    cart.map(async (item) => {
-      const unitAmount = await getStripeProductPrice(item.id);
+  try {
+    const lineItems = cart.map((item) => {
+  
+      const unitAmount = item.price * 100;
+
+      if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
+        console.error(
+          "[create-checkout-session] Invalid unit_amount for cart item",
+          { itemId: item.id, price: item.price, unitAmount }
+        );
+        throw new Error(
+          `Invalid price for product id=${item.id}, price=${item.price}`
+        );
+      }
+
       return {
         price_data: {
           currency: "usd",
           product_data: {
             name: item.name,
           },
-          unit_amount: unitAmount as number,
+          unit_amount: unitAmount,
         },
         quantity: item.quantity,
       };
-    })
-  );
+    });
 
-  try {
     const session = await stripe.checkout.sessions.create({
       line_items: lineItems,
       client_reference_id: userId,
@@ -36,12 +45,25 @@ sessionRoute.post("/create-checkout-session", shouldBeUser, async (c) => {
         "http://localhost:3002/return?session_id={CHECKOUT_SESSION_ID}",
     });
 
-    console.log(session);
+    console.log("[create-checkout-session] Created session:", session.id);
 
-    return c.json({ checkoutSessionClientSecret: session.client_secret });
+    if (!session.client_secret) {
+      console.error(
+        "[create-checkout-session] Stripe did not return client_secret",
+        session
+      );
+      return c.json(
+        { error: "Stripe did not return a client_secret" },
+        500
+      );
+    }
+
+    return c.json({
+      checkoutSessionClientSecret: session.client_secret,
+    });
   } catch (error) {
-    console.log(error);
-    return c.json({ error });
+    console.error("[create-checkout-session] Stripe error", error);
+    return c.json({ error: "Unable to create checkout session" }, 500);
   }
 });
 
@@ -54,7 +76,7 @@ sessionRoute.get("/:session_id", async (c) => {
     }
   );
 
-  console.log(session);
+  console.log("[get checkout session] ", session);
 
   return c.json({
     status: session.status,
