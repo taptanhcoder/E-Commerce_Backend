@@ -10,10 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read # required for actions/checkout
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -22,21 +22,21 @@ jobs:
           node-version: '20.x'
           cache: 'pnpm'
 
-      # ❗ Bước này CHỈ setup pnpm, KHÔNG set "version"
+      # >>> Đây là chỗ quan trọng: ép dùng đúng pnpm 10.4.1 <<<
       - name: Set up PNPM
         uses: pnpm/action-setup@v4
         with:
-          run_install: false   # ta sẽ tự pnpm install bên dưới
-
-      - name: Show pnpm version
-        run: pnpm -v
+          version: 10.4.1         # KHÔNG để trống, KHÔNG để 9
+          run_install: false
 
       - name: Install dependencies (pnpm workspace)
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
+      # build đúng service product-service trong monorepo
       - name: Build product-service
-        # nếu script build của repo đã filter thì có thể chỉ cần "pnpm run build"
-        run: pnpm turbo run build --filter=product-service...
+        run: |
+          cd backend/apps/product-service
+          pnpm run build --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -56,7 +56,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
