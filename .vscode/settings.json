@@ -1,4 +1,5 @@
 {
     "javascript.preferGoToSourceDefinition": true,
-    "javascript.referencesCodeLens.enabled": false
+    "javascript.referencesCodeLens.enabled": false,
+    "git.ignoreLimitWarning": true
 }

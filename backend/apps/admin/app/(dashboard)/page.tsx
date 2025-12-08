@@ -9,8 +9,9 @@ import { auth } from "@clerk/nextjs/server";
 import { OrderChartType } from "@repo/types";
 
 const Homepage = async () => {
+  // <-- CHỈ SỬA 2 DÒNG NÀY
   const { getToken } = await auth();
-  const token = await getToken(); 
+  const token = await getToken({ template: "backend" });
 
   const orderChartData: Promise<OrderChartType[]> = fetch(
     `${process.env.NEXT_PUBLIC_ORDER_SERVICE_URL}/order-chart`,
@@ -35,10 +36,7 @@ const Homepage = async () => {
         const data = (await res.json()) as OrderChartType[];
         return data;
       } catch (error) {
-        console.error(
-          "[Dashboard] Error parsing order chart JSON:",
-          error
-        );
+        console.error("[Dashboard] Error parsing order chart JSON:", error);
         return [] as OrderChartType[];
       }
     })

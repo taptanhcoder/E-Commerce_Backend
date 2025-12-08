@@ -6,8 +6,9 @@ import { OrderType } from "@repo/types";
 
 const getData = async (): Promise<OrderType[]> => {
   try {
+    // LẤY TOKEN THEO TEMPLATE "backend"
     const { getToken } = await auth();
-    const token = await getToken(); 
+    const token = await getToken({ template: "backend" });
 
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_ORDER_SERVICE_URL}/orders`,
