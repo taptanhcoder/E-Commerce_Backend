@@ -24,33 +24,28 @@ jobs:
           node-version: '20.x'
           cache: 'pnpm'
 
-      # 🔹 BƯỚC QUAN TRỌNG: bật corepack để có pnpm theo packageManager
-      - name: Enable corepack (pnpm)
-        run: corepack enable
+      # 🔹 CÀI PNPM nhưng KHÔNG CHỈ ĐỊNH version (để nó đọc từ package.json)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false  # tự mình gọi pnpm install bên dưới
 
-      # (Tuỳ chọn) kiểm tra lại version pnpm
       - name: Show pnpm version
         run: pnpm -v
 
-      # Cài dependency cho toàn monorepo
-      - name: Install dependencies
+      - name: Install dependencies (root monorepo)
         run: pnpm install
 
-      # Build riêng cho product-service (nếu cần)
-      # Nếu em chưa có script build trong backend/apps/product-service/package.json
-      # thì dòng này vẫn an toàn nhờ --if-present
+      # Build riêng cho product-service (nếu có build script)
       - name: Build product-service
-      # chạy build bên trong thư mục service
         run: |
           cd backend/apps/product-service
           pnpm run build --if-present
 
-      # Đóng gói artifact cho job deploy
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # 🔹 Chỉ upload folder service để deploy cho gọn
           path: backend/apps/product-service
 
   deploy:
@@ -79,5 +74,4 @@ jobs:
         with:
           app-name: 'ecom-product-service'
           slot-name: 'Production'
-          # 🔹 Deploy đúng thư mục service (chính là artifact đã download)
           package: .
