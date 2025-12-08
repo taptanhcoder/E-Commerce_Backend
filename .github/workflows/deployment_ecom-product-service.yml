@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy Node.js app to Azure Web App - ecom-product-service
 
 on:
@@ -13,37 +10,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # required for actions/checkout
+      contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1) Setup Node (chỉ Node thôi, KHÔNG cache pnpm, KHÔNG đụng pnpm ở đây)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
+          cache: 'pnpm'
 
-      # 2) Bật corepack và chuẩn bị đúng version pnpm theo packageManager
-      - name: Enable corepack and pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.4.1 --activate
+      # ❗ Bước này CHỈ setup pnpm, KHÔNG set "version"
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false   # ta sẽ tự pnpm install bên dưới
 
       - name: Show pnpm version
         run: pnpm -v
 
-      # 3) Cài dependency bằng pnpm ở root monorepo
-      - name: Install dependencies
+      - name: Install dependencies (pnpm workspace)
         run: pnpm install
 
-      # 4) Build đúng service product-service trong Turborepo
-      #    (nếu script "build" ở package.json root đã filter rồi thì chỉ cần pnpm run build)
       - name: Build product-service
+        # nếu script build của repo đã filter thì có thể chỉ cần "pnpm run build"
         run: pnpm turbo run build --filter=product-service...
 
-      # 5) Upload artifact cho job deploy
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -54,15 +48,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write   # required for requesting the JWT
-      contents: read    # required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
