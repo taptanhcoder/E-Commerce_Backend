@@ -419,9 +419,6 @@ importers:
       '@prisma/adapter-pg':
         specifier: ^7.0.1
         version: 7.0.1
-      '@prisma/client':
-        specifier: ^7.1.0
-        version: 7.1.0(prisma@7.0.1(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(typescript@5.9.3)
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -429,6 +426,9 @@ importers:
         specifier: ^8.16.3
         version: 8.16.3
     devDependencies:
+      '@prisma/client':
+        specifier: ^7.1.0
+        version: 7.1.0(prisma@7.0.1(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config

@@ -124,53 +124,69 @@ const CartPage = () => {
         {/* STEPS */}
         <div className="w-full lg:w-7/12 shadow-lg border-1 border-gray-100 p-8 rounded-lg flex flex-col gap-8">
           {activeStep === 1 ? (
-            cart.map((item) => (
-              // SINGLE CART ITEM
-              <div
-                className="flex items-center justify-between"
-                key={item.id + item.selectedSize + item.selectedColor}
-              >
-                {/* IMAGE AND DETAILS */}
-                <div className="flex gap-8">
-                  {/* IMAGE */}
-                  <div className="relative w-32 h-32 bg-gray-50 rounded-lg overflow-hidden">
-                    <Image
-                      src={
-                        (item.images as Record<string, string>)?.[
-                          item.selectedColor
-                        ] || ""
-                      }
-                      alt={item.name}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  {/* ITEM DETAILS */}
-                  <div className="flex flex-col justify-between">
-                    <div className="flex flex-col gap-1">
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <p className="text-xs text-gray-500">
-                        Quantity: {item.quantity}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Size: {item.selectedSize}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Color: {item.selectedColor}
+            cart.map((item) => {
+              const imageSrc =
+                typeof (item.images as Record<string, unknown>)?.[
+                  item.selectedColor
+                ] === "string"
+                  ? ((item.images as Record<string, unknown>)[
+                      item.selectedColor
+                    ] as string)
+                  : undefined;
+
+              return (
+                // SINGLE CART ITEM
+                <div
+                  className="flex items-center justify-between"
+                  key={item.id + item.selectedSize + item.selectedColor}
+                >
+                  {/* IMAGE AND DETAILS */}
+                  <div className="flex gap-8">
+                    {/* IMAGE */}
+                    <div className="relative w-32 h-32 bg-gray-50 rounded-lg overflow-hidden">
+                      {imageSrc ? (
+                        <Image
+                          src={imageSrc}
+                          alt={item.name}
+                          fill
+                          sizes="128px"
+                          className="object-contain"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200" />
+                      )}
+                    </div>
+
+                    {/* ITEM DETAILS */}
+                    <div className="flex flex-col justify-between">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium">{item.name}</p>
+                        <p className="text-xs text-gray-500">
+                          Quantity: {item.quantity}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Size: {item.selectedSize}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Color: {item.selectedColor}
+                        </p>
+                      </div>
+                      <p className="font-medium">
+                        ${(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
-                    <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
                   </div>
+
+                  {/* DELETE BUTTON */}
+                  <button
+                    onClick={() => removeFromCart(item)}
+                    className="w-8 h-8 rounded-full bg-red-100 hover:bg-red-200 transition-all duration-300 text-red-400 flex items-center justify-center cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
-                {/* DELETE BUTTON */}
-                <button
-                  onClick={() => removeFromCart(item)}
-                  className="w-8 h-8 rounded-full bg-red-100 hover:bg-red-200 transition-all duration-300 text-red-400 flex items-center justify-center cursor-pointer"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            ))
+              );
+            })
           ) : activeStep === 2 ? (
             <ShippingForm setShippingForm={setShippingForm} />
           ) : activeStep === 3 && shippingForm ? (
