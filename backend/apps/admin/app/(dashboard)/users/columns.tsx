@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils";
 import type { User } from "@clerk/nextjs/server";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const columns: ColumnDef<User>[] = [
   {
@@ -42,32 +42,14 @@ export const columns: ColumnDef<User>[] = [
     header: "Avatar",
     cell: ({ row }) => {
       const user = row.original;
-
-      const avatarSrc =
-        typeof user.imageUrl === "string" && user.imageUrl.trim() !== ""
-          ? user.imageUrl
-          : null;
-
-      const initials =
-        (user.firstName?.charAt(0) ||
-          user.username?.charAt(0) ||
-          "-").toUpperCase();
+      const displayName = user.firstName || user.username || "-";
+      const initial = displayName.charAt(0).toUpperCase();
 
       return (
-        <div className="w-9 h-9 relative">
-          {avatarSrc ? (
-            <Image
-              src={avatarSrc}
-              alt={user.firstName || user.username || "-"}
-              fill
-              className="rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs">
-              {initials}
-            </div>
-          )}
-        </div>
+        <Avatar className="w-9 h-9">
+          <AvatarImage src={user.imageUrl} alt={displayName} />
+          <AvatarFallback>{initial}</AvatarFallback>
+        </Avatar>
       );
     },
   },

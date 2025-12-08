@@ -1,40 +1,35 @@
-
 import "dotenv/config";
 import { PrismaClient } from "../generated/prisma/index.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("DATABASE_URL is not set in environment variables");
 }
 
-
 const adapter = new PrismaPg({ connectionString });
-
 
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log(" Seeding database...");
+  console.log("🟢 Seeding database...");
 
-  // 1) Seed Category (15 dòng)
+  // 🔹 Xóa product trước rồi mới xóa category (tránh lỗi FK)
+  await prisma.product.deleteMany({});
+  await prisma.category.deleteMany({});
+
+  console.log("✅ Đã xóa dữ liệu cũ");
+
+  // 1) Seed Category (match với list ở frontend, bỏ icon)
   const categories = [
-    { name: "Đồ thể thao", slug: "sportswear" },
-    { name: "Áo thun nam", slug: "men-tshirt" },
-    { name: "Áo khoác nữ", slug: "women-jacket" },
-    { name: "Giày chạy bộ", slug: "running-shoes" },
-    { name: "Phụ kiện", slug: "accessories" },
-    { name: "Đồ mặc nhà", slug: "homewear" },
-    { name: "Đồ công sở", slug: "officewear" },
-    { name: "Áo sơ mi nam", slug: "men-shirt" },
-    { name: "Váy nữ", slug: "women-dress" },
-    { name: "Đồ trẻ em", slug: "kids-clothing" },
-    { name: "Đồ tập gym", slug: "gymwear" },
-    { name: "Đồ yoga", slug: "yoga-wear" },
-    { name: "Đồ bơi", slug: "swimwear" },
-    { name: "Đồ lót", slug: "underwear" },
-    { name: "Áo khoác nam", slug: "men-jacket" }
+    { name: "All", slug: "all" },
+    { name: "T-shirts", slug: "t-shirts" },
+    { name: "Shoes", slug: "shoes" },
+    { name: "Accessories", slug: "accessories" },
+    { name: "Bags", slug: "bags" },
+    { name: "Dresses", slug: "dresses" },
+    { name: "Jackets", slug: "jackets" },
+    { name: "Gloves", slug: "gloves" },
   ];
 
   await prisma.category.createMany({
@@ -42,235 +37,149 @@ async function main() {
     skipDuplicates: true,
   });
 
-  console.log(" Seed Category xong");
+  console.log("✅ Seed Category xong");
 
-
+  // 2) Seed Product (đúng theo data bạn đưa + thêm categorySlug)
   const products = [
     {
-      name: "Sports Training Set",
-      shortDescription: "Bộ đồ thể thao co giãn, thấm hút mồ hôi",
+      name: "Adidas CoreFit T-Shirt",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Bộ đồ thể thao gồm áo + quần short, chất liệu co giãn, thấm hút mồ hôi tốt. Phù hợp tập gym, chạy bộ.",
-      price: 399000,
-      sizes: ["S", "M", "L", "XL"],
-      colors: ["black", "red"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 39.9, // ⚠ nếu schema dùng Int thì đổi thành 3990 hoặc sửa schema sang Decimal
+      sizes: ["s", "m", "l", "xl", "xxl"],
+      colors: ["gray", "purple", "green"],
       images: {
-        black: ["https://example.com/images/sports-set-black.jpg"],
-        red: ["https://example.com/images/sports-set-red.jpg"],
+        gray: "/products/1g.png",
+        purple: "/products/1p.png",
+        green: "/products/1gr.png",
       },
-      categorySlug: "sportswear",
+      categorySlug: "t-shirts",
     },
     {
-      name: "Áo thun nam basic",
-      shortDescription: "Áo thun cotton 100%, form regular",
+      name: "Puma Ultra Warm Zip",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Áo thun nam chất liệu cotton 100%, thấm hút mồ hôi tốt, form regular, dễ phối đồ hằng ngày.",
-      price: 199000,
-      sizes: ["S", "M", "L", "XL"],
-      colors: ["white", "black", "navy"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 59.9,
+      sizes: ["s", "m", "l", "xl"],
+      colors: ["gray", "green"],
       images: {
-        white: ["https://example.com/images/men-tshirt-basic-white.jpg"],
-        black: ["https://example.com/images/men-tshirt-basic-black.jpg"],
-        navy: ["https://example.com/images/men-tshirt-basic-navy.jpg"],
+        gray: "/products/2g.png",
+        green: "/products/2gr.png",
       },
-      categorySlug: "men-tshirt",
+      categorySlug: "jackets",
     },
     {
-      name: "Áo thun nam oversize",
-      shortDescription: "Áo thun form rộng, phong cách streetwear",
+      name: "Nike Air Essentials Pullover",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Áo thun nam form rộng, chất cotton dày dặn, phù hợp phong cách streetwear hiện đại.",
-      price: 249000,
-      sizes: ["M", "L", "XL"],
-      colors: ["black", "gray"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 69.9,
+      sizes: ["s", "m", "l"],
+      colors: ["green", "blue", "black"],
       images: {
-        black: ["https://example.com/images/men-tshirt-oversize-black.jpg"],
-        gray: ["https://example.com/images/men-tshirt-oversize-gray.jpg"],
+        green: "/products/3gr.png",
+        blue: "/products/3b.png",
+        black: "/products/3bl.png",
       },
-      categorySlug: "men-tshirt",
+      categorySlug: "jackets",
     },
     {
-      name: "Áo khoác gió nữ dáng rộng",
-      shortDescription: "Áo khoác gió nữ oversize, chống nước nhẹ",
+      name: "Nike Dri Flex T-Shirt",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Áo khoác gió nữ dáng rộng, chống nước nhẹ, có mũ trùm, phù hợp đi chơi, đi làm.",
-      price: 459000,
-      sizes: ["S", "M", "L"],
-      colors: ["beige", "black"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 29.9,
+      sizes: ["s", "m", "l"],
+      colors: ["white", "pink"],
       images: {
-        beige: ["https://example.com/images/women-jacket-oversize-beige.jpg"],
-        black: ["https://example.com/images/women-jacket-oversize-black.jpg"],
+        white: "/products/4w.png",
+        pink: "/products/4p.png",
       },
-      categorySlug: "women-jacket",
+      categorySlug: "t-shirts",
     },
     {
-      name: "Áo khoác jeans nữ",
-      shortDescription: "Áo khoác jeans nữ form regular",
+      name: "Under Armour StormFleece",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Áo khoác jeans nữ chất liệu denim bền, form regular, dễ phối với váy hoặc quần jeans.",
-      price: 499000,
-      sizes: ["S", "M", "L"],
-      colors: ["blue"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 49.9,
+      sizes: ["s", "m", "l"],
+      colors: ["red", "orange", "black"],
       images: {
-        blue: ["https://example.com/images/women-jeans-jacket-blue.jpg"],
+        red: "/products/5r.png",
+        orange: "/products/5o.png",
+        black: "/products/5bl.png",
       },
-      categorySlug: "women-jacket",
+      categorySlug: "jackets",
     },
     {
-      name: "Giày chạy bộ nam ComfortRun",
-      shortDescription: "Giày chạy bộ đệm êm, nhẹ",
+      name: "Nike Air Max 270",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Giày chạy bộ nam với đệm êm, trọng lượng nhẹ, phù hợp chạy bộ hằng ngày và tập luyện.",
-      price: 799000,
-      sizes: ["40", "41", "42", "43"],
-      colors: ["black", "blue"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 59.9,
+      sizes: ["40", "42", "43", "44"],
+      colors: ["gray", "white"],
       images: {
-        black: ["https://example.com/images/running-shoes-men-black.jpg"],
-        blue: ["https://example.com/images/running-shoes-men-blue.jpg"],
+        gray: "/products/6g.png",
+        white: "/products/6w.png",
       },
-      categorySlug: "running-shoes",
+      categorySlug: "shoes",
     },
     {
-      name: "Giày chạy bộ nữ LightStep",
-      shortDescription: "Giày chạy bộ nữ siêu nhẹ",
+      name: "Nike Ultraboost Pulse",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Giày chạy bộ nữ với thiết kế siêu nhẹ, thoáng khí, hỗ trợ bàn chân tốt khi vận động.",
-      price: 759000,
-      sizes: ["36", "37", "38", "39"],
-      colors: ["pink", "white"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 69.9,
+      sizes: ["40", "42", "43"],
+      colors: ["gray", "pink"],
       images: {
-        pink: ["https://example.com/images/running-shoes-women-pink.jpg"],
-        white: ["https://example.com/images/running-shoes-women-white.jpg"],
+        gray: "/products/7g.png",
+        pink: "/products/7p.png",
       },
-      categorySlug: "running-shoes",
+      categorySlug: "shoes",
     },
     {
-      name: "Balo thể thao đa năng",
-      shortDescription: "Balo thể thao dung tích lớn",
+      name: "Levi’s Classic Denim",
+      shortDescription:
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
       description:
-        "Balo thể thao dung tích lớn, nhiều ngăn, có ngăn riêng cho giày, phù hợp đi tập gym hoặc du lịch ngắn ngày.",
-      price: 359000,
-      sizes: [],
-      colors: ["black"],
+        "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      price: 59.9,
+      sizes: ["s", "m", "l"],
+      colors: ["blue", "green"],
       images: {
-        black: ["https://example.com/images/sports-backpack-black.jpg"],
+        blue: "/products/8b.png",
+        green: "/products/8gr.png",
       },
-      categorySlug: "accessories",
+      categorySlug: "dresses", // hoặc tạo thêm category "pants" nếu schema cho phép
     },
-    {
-      name: "Nón lưỡi trai basic",
-      shortDescription: "Nón lưỡi trai unisex, đơn giản",
-      description:
-        "Nón lưỡi trai unisex với thiết kế đơn giản, dễ phối đồ, phù hợp đi chơi, đi dạo.",
-      price: 129000,
-      sizes: [],
-      colors: ["black", "white"],
-      images: {
-        black: ["https://example.com/images/cap-basic-black.jpg"],
-        white: ["https://example.com/images/cap-basic-white.jpg"],
-      },
-      categorySlug: "accessories",
-    },
-    {
-      name: "Bộ đồ ngủ cotton",
-      shortDescription: "Bộ đồ ngủ cotton thoáng mát",
-      description:
-        "Bộ đồ ngủ cotton tay ngắn, quần short, chất liệu mềm mại, dễ chịu khi ngủ.",
-      price: 279000,
-      sizes: ["S", "M", "L"],
-      colors: ["pink", "gray"],
-      images: {
-        pink: ["https://example.com/images/homewear-set-pink.jpg"],
-        gray: ["https://example.com/images/homewear-set-gray.jpg"],
-      },
-      categorySlug: "homewear",
-    },
-    {
-      name: "Áo sơ mi nam công sở",
-      shortDescription: "Áo sơ mi nam tay dài, kiểu dáng lịch sự",
-      description:
-        "Áo sơ mi nam tay dài, form slim fit, chất liệu ít nhăn, phù hợp môi trường công sở.",
-      price: 349000,
-      sizes: ["M", "L", "XL"],
-      colors: ["white", "light-blue"],
-      images: {
-        white: ["https://example.com/images/men-shirt-office-white.jpg"],
-        "light-blue": [
-          "https://example.com/images/men-shirt-office-lightblue.jpg",
-        ],
-      },
-      categorySlug: "men-shirt",
-    },
-    {
-      name: "Quần tây nam",
-      shortDescription: "Quần tây nam công sở, ống đứng",
-      description:
-        "Quần tây nam công sở, ống đứng, chất liệu ít nhăn, dễ phối với áo sơ mi, áo vest.",
-      price: 399000,
-      sizes: ["M", "L", "XL"],
-      colors: ["black"],
-      images: {
-        black: ["https://example.com/images/men-office-pants-black.jpg"],
-      },
-      categorySlug: "officewear",
-    },
-    {
-      name: "Váy chữ A basic",
-      shortDescription: "Váy chữ A đơn giản, dễ phối",
-      description:
-        "Váy chữ A dáng ngắn, phù hợp đi làm hoặc đi chơi, dễ phối với áo sơ mi hoặc áo thun.",
-      price: 329000,
-      sizes: ["S", "M", "L"],
-      colors: ["black", "beige"],
-      images: {
-        black: ["https://example.com/images/women-skirt-a-black.jpg"],
-        beige: ["https://example.com/images/women-skirt-a-beige.jpg"],
-      },
-      categorySlug: "women-dress",
-    },
-    {
-      name: "Quần legging tập gym",
-      shortDescription: "Quần legging co giãn, ôm body",
-      description:
-        "Quần legging nữ co giãn tốt, ôm body, phù hợp tập gym, yoga, chạy bộ.",
-      price: 259000,
-      sizes: ["S", "M", "L"],
-      colors: ["black"],
-      images: {
-        black: ["https://example.com/images/gym-leggings-black.jpg"],
-      },
-      categorySlug: "gymwear",
-    },
-    {
-      name: "Áo bra thể thao",
-      shortDescription: "Áo bra thể thao nâng đỡ tốt",
-      description:
-        "Áo bra thể thao với khả năng nâng đỡ tốt, chất liệu mềm mại, thấm hút mồ hôi.",
-      price: 219000,
-      sizes: ["S", "M", "L"],
-      colors: ["black", "purple"],
-      images: {
-        black: ["https://example.com/images/sports-bra-black.jpg"],
-        purple: ["https://example.com/images/sports-bra-purple.jpg"],
-      },
-      categorySlug: "gymwear",
-    }
   ];
 
   await prisma.product.createMany({
     data: products,
   });
 
-  console.log(" Seed Product xong");
+  console.log("✅ Seed Product xong");
 }
 
 main()
   .then(async () => {
-    console.log("Seeding hoàn tất!");
+    console.log("🎉 Seeding hoàn tất!");
     await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(" Lỗi khi seed:", e);
+    console.error("❌ Lỗi khi seed:", e);
     await prisma.$disconnect();
     process.exit(1);
   });

@@ -1,6 +1,5 @@
 // backend/apps/admin/app/(dashboard)/users/[id]/page.tsx
 import CardList from "@/components/CardList";
-import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,9 +24,7 @@ import { auth, type User } from "@clerk/nextjs/server";
 
 const getData = async (id: string): Promise<User | null> => {
   const { getToken } = await auth();
-  const token = await getToken({
-    template: process.env.CLERK_JWT_TEMPLATE_NAME,
-  });
+  const token = await getToken(); // ✅ token mặc định
 
   try {
     const res = await fetch(
@@ -49,13 +46,10 @@ const getData = async (id: string): Promise<User | null> => {
       return null;
     }
 
-    const data = (await res.json()) as User;
+    const data = await res.json();
     return data;
   } catch (err) {
-    console.error(
-      "[SingleUserPage] Network error while fetching user:",
-      err
-    );
+    console.error("[SingleUserPage] Network error while fetching user:", err);
     return null;
   }
 };
@@ -63,9 +57,9 @@ const getData = async (id: string): Promise<User | null> => {
 const SingleUserPage = async ({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) => {
-  const { id } = params;
+  const { id } = await params;
   const data = await getData(id);
 
   if (!data) {
@@ -86,9 +80,7 @@ const SingleUserPage = async ({
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>
-              {data?.firstName + " " + data?.lastName ||
-                data?.username ||
-                "-"}
+              {data.firstName + " " + data.lastName || data.username || "-"}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
@@ -125,8 +117,8 @@ const SingleUserPage = async ({
                 <HoverCardContent>
                   <h1 className="font-bold mb-2">Admin</h1>
                   <p className="text-sm text-muted-foreground">
-                    Admin users have access to all features and can
-                    manage users.
+                    Admin users have access to all features and can manage
+                    users.
                   </p>
                 </HoverCardContent>
               </HoverCard>
@@ -166,15 +158,13 @@ const SingleUserPage = async ({
               <Avatar className="size-12">
                 <AvatarImage src={data.imageUrl} />
                 <AvatarFallback>
-                  {data?.firstName?.charAt(0) ||
-                    data?.username?.charAt(0) ||
+                  {data.firstName?.charAt(0) ||
+                    data.username?.charAt(0) ||
                     "-"}
                 </AvatarFallback>
               </Avatar>
               <h1 className="text-xl font-semibold">
-                {data?.firstName + " " + data?.lastName ||
-                  data?.username ||
-                  "-"}
+                {data.firstName + " " + data.lastName || data.username || "-"}
               </h1>
             </div>
             <p className="text-sm text-muted-foreground"></p>
@@ -200,28 +190,22 @@ const SingleUserPage = async ({
               <div className="flex items-center gap-2">
                 <span className="font-bold">Full name:</span>
                 <span>
-                  {data?.firstName + " " + data?.lastName ||
-                    data?.username ||
+                  {data.firstName + " " + data.lastName ||
+                    data.username ||
                     "-"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Email:</span>
-                <span>
-                  {data.emailAddresses[0]?.emailAddress || "-"}
-                </span>
+                <span>{data.emailAddresses[0]?.emailAddress || "-"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Phone:</span>
-                <span>
-                  {data.phoneNumbers[0]?.phoneNumber || "-"}
-                </span>
+                <span>{data.phoneNumbers[0]?.phoneNumber || "-"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Role:</span>
-                <span>
-                  {String(data.publicMetadata?.role) || "user"}
-                </span>
+                <span>{String(data.publicMetadata?.role) || "user"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold">Status:</span>
@@ -236,7 +220,6 @@ const SingleUserPage = async ({
         </div>
         {/* RIGHT */}
         <div className="w-full xl:w-2/3 space-y-6">
-          {/* CHART CONTAINER */}
           <div className="bg-primary-foreground p-4 rounded-lg">
             <h1 className="text-xl font-semibold">User Activity</h1>
             <AppLineChart />

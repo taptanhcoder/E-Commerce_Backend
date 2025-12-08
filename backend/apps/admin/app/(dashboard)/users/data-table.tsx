@@ -59,19 +59,13 @@ export function DataTable<TData, TValue>({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const token = await getToken({
-        template: process.env.NEXT_PUBLIC_CLERK_JWT_TEMPLATE_NAME,
-      });
-
+      const token = await getToken();
       const selectedRows = table.getSelectedRowModel().rows;
-
-      if (!selectedRows.length) return;
 
       await Promise.all(
         selectedRows.map(async (row) => {
           const userId = (row.original as User).id;
-
-          const res = await fetch(
+          await fetch(
             `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/users/${userId}`,
             {
               method: "DELETE",
@@ -80,16 +74,6 @@ export function DataTable<TData, TValue>({
               },
             }
           );
-
-          if (!res.ok) {
-            console.error(
-              "[UsersTable] Failed to delete user:",
-              userId,
-              res.status,
-              res.statusText
-            );
-            throw new Error("Failed to delete one or more users");
-          }
         })
       );
     },
@@ -154,10 +138,7 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center"
-              >
+              <TableCell colSpan={columns.length} className="h-24 text-center">
                 No results.
               </TableCell>
             </TableRow>

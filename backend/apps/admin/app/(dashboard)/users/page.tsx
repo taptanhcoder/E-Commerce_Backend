@@ -5,9 +5,7 @@ import { DataTable } from "./data-table";
 
 const getData = async (): Promise<{ data: User[]; totalCount: number }> => {
   const { getToken } = await auth();
-  const token = await getToken({
-    template: process.env.CLERK_JWT_TEMPLATE_NAME,
-  });
+  const token = await getToken(); 
 
   try {
     const res = await fetch(
@@ -32,10 +30,7 @@ const getData = async (): Promise<{ data: User[]; totalCount: number }> => {
     const data = await res.json();
     return data;
   } catch (err) {
-    console.error(
-      "[UsersPage] Network error while fetching users:",
-      err
-    );
+    console.error("[UsersPage] Network error while fetching users:", err);
     return { data: [], totalCount: 0 };
   }
 };

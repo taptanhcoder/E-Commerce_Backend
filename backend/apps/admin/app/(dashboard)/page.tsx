@@ -10,10 +10,7 @@ import { OrderChartType } from "@repo/types";
 
 const Homepage = async () => {
   const { getToken } = await auth();
-
-  const token = await getToken({
-    template: process.env.CLERK_JWT_TEMPLATE_NAME,
-  });
+  const token = await getToken(); 
 
   const orderChartData: Promise<OrderChartType[]> = fetch(
     `${process.env.NEXT_PUBLIC_ORDER_SERVICE_URL}/order-chart`,

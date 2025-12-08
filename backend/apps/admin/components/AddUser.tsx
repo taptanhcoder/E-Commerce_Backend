@@ -20,13 +20,6 @@ import {
   FormMessage,
 } from "./ui/form";
 import { Input } from "./ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "./ui/button";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "@tanstack/react-query";
@@ -49,9 +42,7 @@ const AddUser = () => {
 
   const mutation = useMutation({
     mutationFn: async (data: z.infer<typeof UserFormSchema>) => {
-      const token = await getToken({
-        template: process.env.NEXT_PUBLIC_CLERK_JWT_TEMPLATE_NAME,
-      });
+      const token = await getToken(); // ✅ dùng token mặc định, không template
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/users`,
@@ -66,11 +57,6 @@ const AddUser = () => {
       );
 
       if (!res.ok) {
-        console.error(
-          "[AddUser] Failed to create user:",
-          res.status,
-          res.statusText
-        );
         throw new Error("Failed to create user!");
       }
     },
@@ -91,9 +77,7 @@ const AddUser = () => {
           <Form {...form}>
             <form
               className="space-y-8"
-              onSubmit={form.handleSubmit((data) =>
-                mutation.mutate(data)
-              )}
+              onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
             >
               <FormField
                 control={form.control}
@@ -104,9 +88,7 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Enter user first name.
-                    </FormDescription>
+                    <FormDescription>Enter user first name.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -120,9 +102,7 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Enter user last name.
-                    </FormDescription>
+                    <FormDescription>Enter user last name.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -136,9 +116,7 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Enter username.
-                    </FormDescription>
+                    <FormDescription>Enter username.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -152,16 +130,11 @@ const AddUser = () => {
                     <FormControl>
                       <Input
                         placeholder="email1@gmail.com, email2@gmail.com"
-                        value={
-                          Array.isArray(field.value)
-                            ? field.value.join(", ")
-                            : ""
-                        }
                         onChange={(e) => {
                           const emails = e.target.value
                             .split(",")
                             .map((email) => email.trim())
-                            .filter((email) => email);
+                            .filter(Boolean);
                           field.onChange(emails);
                         }}
                       />
@@ -182,9 +155,7 @@ const AddUser = () => {
                     <FormControl>
                       <Input {...field} type="password" />
                     </FormControl>
-                    <FormDescription>
-                      Enter user password.
-                    </FormDescription>
+                    <FormDescription>Enter user password.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

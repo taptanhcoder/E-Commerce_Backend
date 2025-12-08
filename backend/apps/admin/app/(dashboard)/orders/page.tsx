@@ -5,12 +5,10 @@ import { DataTable } from "./data-table";
 import { OrderType } from "@repo/types";
 
 const getData = async (): Promise<OrderType[]> => {
-  const { getToken } = await auth();
-  const token = await getToken({
-    template: process.env.CLERK_JWT_TEMPLATE_NAME,
-  });
-
   try {
+    const { getToken } = await auth();
+    const token = await getToken(); 
+
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_ORDER_SERVICE_URL}/orders`,
       {
@@ -30,13 +28,10 @@ const getData = async (): Promise<OrderType[]> => {
       return [];
     }
 
-    const data = (await res.json()) as OrderType[];
+    const data = await res.json();
     return data;
   } catch (err) {
-    console.error(
-      "[OrdersPage] Network error while fetching orders:",
-      err
-    );
+    console.error("[OrdersPage] Network error while fetching orders:", err);
     return [];
   }
 };
