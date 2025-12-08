@@ -4,50 +4,19 @@ import { Card, CardContent, CardFooter, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { OrderType, ProductsType } from "@repo/types";
 import { auth } from "@clerk/nextjs/server";
-
-type ProductItem = ProductsType[number];
-
-const getProductImageUrl = (item: ProductItem): string | null => {
-  const images = item.images as Record<string, unknown> | undefined;
-  if (!images) return null;
-
-  const colors = Array.isArray(item.colors) ? item.colors : [];
-
-  // Ưu tiên lấy theo màu đầu tiên trong danh sách colors
-  for (const color of colors) {
-    const raw = images[color as string];
-    if (typeof raw === "string") {
-      const value = raw.trim();
-      if (value.length > 0) {
-        return value;
-      }
-    }
-  }
-
-  // Fallback: lấy value hợp lệ đầu tiên trong images
-  const first = Object.values(images).find(
-    (raw) => typeof raw === "string" && raw.trim().length > 0
-  ) as string | undefined;
-
-  return first ?? null;
-};
+import { getProductImageUrl } from "@/lib/image";
 
 const CardList = async ({ title }: { title: string }) => {
   let products: ProductsType = [];
   let orders: OrderType[] = [];
 
   const { getToken } = await auth();
-  const token = await getToken({
-    template: process.env.CLERK_JWT_TEMPLATE_NAME,
-  });
+  const token = await getToken();
 
   if (title === "Popular Products") {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL}/products?limit=5&popular=true`,
-        {
-          cache: "no-store",
-        }
+        `${process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL}/products?limit=5&popular=true`
       );
 
       if (!res.ok) {
@@ -56,14 +25,13 @@ const CardList = async ({ title }: { title: string }) => {
           res.status,
           res.statusText
         );
+        products = [];
       } else {
-        products = await res.json();
+        products = (await res.json()) as ProductsType;
       }
     } catch (error) {
-      console.error(
-        "[CardList] Network error while fetching popular products:",
-        error
-      );
+      console.error("[CardList] Failed to fetch popular products:", error);
+      products = [];
     }
   } else {
     try {
@@ -73,7 +41,6 @@ const CardList = async ({ title }: { title: string }) => {
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          cache: "no-store",
         }
       );
 
@@ -83,14 +50,13 @@ const CardList = async ({ title }: { title: string }) => {
           res.status,
           res.statusText
         );
+        orders = [];
       } else {
-        orders = await res.json();
+        orders = (await res.json()) as OrderType[];
       }
     } catch (error) {
-      console.error(
-        "[CardList] Network error while fetching latest orders:",
-        error
-      );
+      console.error("[CardList] Failed to fetch latest orders:", error);
+      orders = [];
     }
   }
 

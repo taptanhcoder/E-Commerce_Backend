@@ -8,6 +8,24 @@ declare module "fastify" {
   }
 }
 
+/**
+ * Helper: lấy role từ sessionClaims theo nhiều khả năng.
+ */
+const extractRoleFromClaims = (
+  claims: CustomJwtSessionClaims | undefined
+): string | undefined => {
+  if (!claims) return undefined;
+  const anyClaims = claims as any;
+
+  return (
+    anyClaims.metadata?.role ??
+    anyClaims.publicMetadata?.role ??
+    anyClaims.privateMetadata?.role ??
+    anyClaims.orgRole ??
+    anyClaims.org_role
+  );
+};
+
 export const shouldBeUser = async (
   request: FastifyRequest,
   reply: FastifyReply
@@ -31,9 +49,10 @@ export const shouldBeAdmin = async (
     return reply.status(401).send({ message: "You are not logged in!" });
   }
 
-  const claims = auth.sessionClaims as CustomJwtSessionClaims;
+  const claims = auth.sessionClaims as CustomJwtSessionClaims | undefined;
+  const role = extractRoleFromClaims(claims);
 
-  if (claims.metadata?.role !== "admin") {
+  if (role !== "admin") {
     return reply.status(403).send({ message: "Unauthorized!" });
   }
 

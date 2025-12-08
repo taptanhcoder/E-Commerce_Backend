@@ -35,3 +35,4 @@ yarn-error.log*
 *.pem
 
 ecomerce/
+backend\apps\client\

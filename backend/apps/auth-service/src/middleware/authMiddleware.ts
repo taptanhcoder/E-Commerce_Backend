@@ -10,6 +10,22 @@ declare global {
   }
 }
 
+
+const extractRoleFromClaims = (
+  claims: CustomJwtSessionClaims | undefined
+): string | undefined => {
+  if (!claims) return undefined;
+  const anyClaims = claims as any;
+
+  return (
+    anyClaims.metadata?.role ??
+    anyClaims.publicMetadata?.role ??
+    anyClaims.privateMetadata?.role ??
+    anyClaims.orgRole ??
+    anyClaims.org_role
+  );
+};
+
 export const shouldBeUser = (
   req: Request,
   res: Response,
@@ -19,10 +35,10 @@ export const shouldBeUser = (
   const userId = auth.userId;
 
   if (!userId) {
-    return res.status(401).json({ message: "you are not logged in!" });
+    return res.status(401).json({ message: "You are not logged in!" });
   }
 
-  req.userId = auth.userId;
+  req.userId = userId;
 
   return next();
 };
@@ -39,13 +55,14 @@ export const shouldBeAdmin = (
     return res.status(401).json({ message: "You are not logged in!" });
   }
 
-  const claims = auth.sessionClaims as CustomJwtSessionClaims;
+  const claims = auth.sessionClaims as CustomJwtSessionClaims | undefined;
+  const role = extractRoleFromClaims(claims);
 
-  if (claims.metadata?.role !== "admin") {
-    return res.status(403).send({ message: "Unauthorized!" });
+  if (role !== "admin") {
+    return res.status(403).json({ message: "Unauthorized!" });
   }
 
-  req.userId = auth.userId;
+  req.userId = userId;
 
   return next();
 };
