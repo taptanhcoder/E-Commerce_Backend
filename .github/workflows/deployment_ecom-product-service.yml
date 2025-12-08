@@ -1,3 +1,6 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
 name: Build and deploy Node.js app to Azure Web App - ecom-product-service
 
 on:
@@ -10,44 +13,52 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'pnpm'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          # KHÔNG khai báo "version" để action tự đọc từ package.json (pnpm@10.4.1+...)
-          run_install: false
-          cache: true
-          cache_dependency_path: pnpm-lock.yaml
+      # 🔹 BƯỚC QUAN TRỌNG: bật corepack để có pnpm theo packageManager
+      - name: Enable corepack (pnpm)
+        run: corepack enable
 
-      - name: Install dependencies (monorepo root)
+      # (Tuỳ chọn) kiểm tra lại version pnpm
+      - name: Show pnpm version
+        run: pnpm -v
+
+      # Cài dependency cho toàn monorepo
+      - name: Install dependencies
         run: pnpm install
 
+      # Build riêng cho product-service (nếu cần)
+      # Nếu em chưa có script build trong backend/apps/product-service/package.json
+      # thì dòng này vẫn an toàn nhờ --if-present
       - name: Build product-service
-        working-directory: backend/apps/product-service
-        run: pnpm run build
+      # chạy build bên trong thư mục service
+        run: |
+          cd backend/apps/product-service
+          pnpm run build --if-present
 
+      # Đóng gói artifact cho job deploy
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
+          # 🔹 Chỉ upload folder service để deploy cho gọn
           path: backend/apps/product-service
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
@@ -62,10 +73,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2613E24BD7944432812240FFA093D475 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_78D6D871EB48456FBFE36A79F6D2CDAD }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'ecom-product-service'
           slot-name: 'Production'
+          # 🔹 Deploy đúng thư mục service (chính là artifact đã download)
           package: .
