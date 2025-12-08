@@ -50,10 +50,10 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          # 🔴 THAY 3 DÒNG NÀY BẰNG TÊN SECRETS THỰC CỦA ADMIN APP
+
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1F8316319FD1434E83765B2026351D53 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_133B340C342B42459460C06CE0F91336 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_53E656F1A9BC43C0A237C5B8788A018F}}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D847B491616143199BB0B316CD77717A }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
