@@ -24,19 +24,17 @@ jobs:
           node-version: '20.x'
           cache: 'pnpm'
 
-      # 🔹 CÀI PNPM nhưng KHÔNG CHỈ ĐỊNH version (để nó đọc từ package.json)
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false  # tự mình gọi pnpm install bên dưới
+      # 🔹 Bật corepack để có pnpm theo packageManager trong package.json
+      - name: Enable corepack (pnpm)
+        run: corepack enable
 
       - name: Show pnpm version
         run: pnpm -v
 
-      - name: Install dependencies (root monorepo)
+      - name: Install dependencies
         run: pnpm install
 
-      # Build riêng cho product-service (nếu có build script)
+      # Nếu backend/apps/product-service có script build riêng
       - name: Build product-service
         run: |
           cd backend/apps/product-service
@@ -60,7 +58,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
