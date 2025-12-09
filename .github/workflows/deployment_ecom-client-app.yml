@@ -1,57 +1,79 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - ecom-client-app
+name: Build and deploy client app (Next.js) to Azure Web App - ecom-client-app
 
 on:
   push:
     branches:
       - deployment
+    # Chỉ chạy khi code client hoặc file workflow này thay đổi
+    paths:
+      - 'backend/apps/client/**'
+      - '.github/workflows/deployment_ecom-client-app.yml'
   workflow_dispatch:
+
+env:
+  APP_PATH: backend/apps/client       # thư mục client trong repo
+  NODE_VERSION: '20.x'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read 
+      contents: read # required cho actions/checkout
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install dependencies
+      # Dùng pnpm cho đúng với monorepo
+      - name: Install pnpm
         run: |
-          npm install
+          corepack enable
+          pnpm --version
 
+      # Cài dependencies ở root monorepo
+      - name: Install dependencies (monorepo)
+        run: |
+          pnpm install
+
+      # Build riêng client app (Next.js)
+      - name: Build client app
+        working-directory: ${{ env.APP_PATH }}
+        run: |
+          pnpm run build
+
+      # Đóng gói artifact chỉ cho client app
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: .
+          name: client-app
+          path: ${{ env.APP_PATH }}
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write
+      id-token: write # required cho azure/login (OIDC)
       contents: read
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: client-app
       
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1F8316319FD1434E83765B2026351D53 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_133B340C342B42459460C06CE0F91336}}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D847B491616143199BB0B316CD77717A }}
+          client-id: '9e3e9206-0a99-4920-885f-b81c66912649'
+          tenant-id: '2dff09ac-2b3b-4182-9953-2b548e0d0b39'
+          subscription-id: 'e4b5ffa6-6c6d-432a-9ba4-755acad7faab'
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -59,4 +81,5 @@ jobs:
         with:
           app-name: 'ecom-client-app'
           slot-name: 'Production'
-          package: .
+          # Sau khi download artifact, vẫn còn đúng cấu trúc backend/apps/client
+          package: ${{ env.APP_PATH }}
