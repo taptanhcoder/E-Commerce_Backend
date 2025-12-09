@@ -62,4 +62,3 @@ jobs:
           app-name: 'ecom-admin-app'
           slot-name: 'Production'
           package: .
-          
