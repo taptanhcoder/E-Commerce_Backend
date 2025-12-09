@@ -28,11 +28,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # Cài pnpm bằng action chính thức (ổn định hơn tự dùng corepack)
+      # Cài pnpm bằng action chính thức
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -44,21 +44,22 @@ jobs:
 
       # Build riêng client app (Next.js)
       - name: Build client app
-        working-directory: ${{ env.APP_PATH }}
-        run: pnpm run build
+        run: |
+          cd $APP_PATH
+          pnpm run build
 
-      # Đóng gói code client thành 1 file ZIP để deploy
+      # Tạo file ZIP chứa nội dung thư mục client, đặt ở root repo: client.zip
       - name: Create deployment package
-        working-directory: ${{ env.APP_PATH }}
-        run: zip -r client.zip .
+        run: |
+          cd $APP_PATH
+          zip -r ../../client.zip .
 
-      # Upload duy nhất file client.zip làm artifact cho job deploy
+      # Upload client.zip làm artifact cho job deploy
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: client-app
-          path: client.zip
-        working-directory: ${{ env.APP_PATH }}
+          path: client.zip   # file client.zip đang nằm ở root repo
 
   deploy:
     runs-on: ubuntu-latest
@@ -72,7 +73,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: client-app
-          path: .   # Tải client.zip về thẳng thư mục làm việc hiện tại
+          path: .   # tải client.zip về thư mục làm việc hiện tại (root)
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -88,5 +89,4 @@ jobs:
         with:
           app-name: 'ecom-client-app'
           slot-name: 'Production'
-          # Deploy đúng file ZIP của client (build xong)
-          package: client.zip
+          package: client.zip   # deploy đúng file ZIP đã build cho client
