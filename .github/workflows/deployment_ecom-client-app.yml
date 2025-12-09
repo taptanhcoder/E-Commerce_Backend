@@ -32,12 +32,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: 'pnpm-lock.yaml'
 
-      # Cài pnpm toàn cục bằng npm (tránh lỗi corepack)
-      - name: Install pnpm
-        run: |
-          npm install -g pnpm
-          pnpm --version
+      # Cài pnpm bằng action chính thức (ổn định hơn corepack)
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       # Cài dependencies cho toàn monorepo (pnpm workspace)
       - name: Install dependencies (monorepo)
@@ -50,7 +52,7 @@ jobs:
         run: |
           pnpm run build
 
-      # Đăng nhập Azure bằng Service Principal mà Azure đã tạo
+      # Đăng nhập Azure bằng Service Principal mà Azure đã tạo (giữ nguyên secrets từ file gốc)
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -58,7 +60,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9403F89004084C538391FDC441E7A14A }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F721E8AD584453E88EA54CA66A1D308 }}
 
-      # Deploy: đứng trong thư mục client và deploy .
+      # Deploy: đứng trong thư mục client và deploy `.` (giống pattern chuẩn Azure)
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
