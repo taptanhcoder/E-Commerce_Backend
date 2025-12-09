@@ -1,93 +1,58 @@
-name: Build and deploy client app (Next.js) to Azure Web App - ecom-client-app
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy client app to Azure Web App - ecom-client-app
 
 on:
   push:
     branches:
-      - deployment
+      - deployment                    # Nhánh bạn dùng để deploy
     paths:
-      - 'backend/apps/client/**'
+      - 'backend/apps/client/**'      # ✅ Đúng thư mục client
       - '.github/workflows/deployment_ecom-client-app.yml'
-  workflow_dispatch:
+  workflow_dispatch:                  # Cho phép chạy tay từ tab Actions
 
 env:
-  APP_PATH: backend/apps/client
-  NODE_VERSION: '20.x'
+  APP_PATH: backend/apps/client       # Thư mục app client trong monorepo
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read                  # cần cho checkout
+      id-token: write                 # cần cho azure/login (OIDC)
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20.x'
 
-      # Cài pnpm, dùng version trong packageManager của package.json
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+      - name: Install dependencies
+        working-directory: ${{ env.APP_PATH }}
+        run: npm install
+        # Nếu bạn chắc chắn dùng pnpm:
+        # run: |
+        #   corepack enable
+        #   pnpm install
 
-      # Cài deps cho toàn monorepo (nếu có workspace)
-      - name: Install dependencies (monorepo)
-        run: pnpm install
-
-      # Cài deps riêng cho client để có node_modules và binary "next"
-      - name: Install client dependencies
-        run: |
-          cd $APP_PATH
-          pnpm install
-
-      # Build client app (Next.js)
       - name: Build client app
-        run: |
-          cd $APP_PATH
-          pnpm run build
-
-      # Tạo file ZIP chứa nội dung thư mục client, đặt ở root repo: client.zip
-      - name: Create deployment package
-        run: |
-          cd $APP_PATH
-          zip -r ../../client.zip .
-
-      # Upload client.zip làm artifact cho job deploy
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: client-app
-          path: client.zip
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: client-app
-          path: .
+        working-directory: ${{ env.APP_PATH }}
+        run: npm run build --if-present
 
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A8C32A6EF75F4BEFBD55B517E23110A5 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9403F89004084C538391FDC441E7A14A }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F721E8AD584453E88EA54CA66A1D308 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1F8316319FD1434E83765B2026351D53 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_133B340C342B42459460C06CE0F91336 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D847B491616143199BB0B316CD77717A }}
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'ecom-client-app'
+          app-name: 'ecom-client-app'   # TÊN App Service của client
           slot-name: 'Production'
-          package: client.zip
+          package: ${{ env.APP_PATH }}  # ✅ Deploy đúng thư mục client
