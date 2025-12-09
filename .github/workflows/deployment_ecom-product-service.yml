@@ -25,7 +25,7 @@ jobs:
     env:
       NODE_VERSION: '20.x'
       APP_PATH: backend/apps/product-service
-      # Dùng cho Prisma generate client (Neon URL)
+
       DATABASE_URL: ${{ secrets.PRODUCT_DB_URL }}
 
     steps:
