@@ -7,9 +7,10 @@ on:
   push:
     branches:
       - deployment
-    # Chỉ chạy khi code client thay đổi
+    # Chỉ chạy khi code client hoặc file workflow này thay đổi
     paths:
       - 'backend/apps/client/**'
+      - '.github/workflows/deployment_ecom-client-app.yml'
   workflow_dispatch:
 
 env:
@@ -50,13 +51,13 @@ jobs:
         run: |
           pnpm run build
 
-      # Đăng nhập Azure bằng Service Principal mà Azure đã tạo (giữ nguyên secret cũ)
+      # Đăng nhập Azure bằng Service Principal mà Azure đã tạo
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A8C32A6EF75F4BEFBD55B517E23110A5 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9403F89004084C538391FDC441E7A14A }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICESUBSCRIPTIONID_3F721E8AD584453E88EA54CA66A1D308 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F721E8AD584453E88EA54CA66A1D308 }}
 
       # Deploy thư mục client (đã build) lên App Service ecom-client-app
       - name: Deploy to Azure Web App
