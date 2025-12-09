@@ -2,25 +2,27 @@
   "name": "product-service",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
     "dev": "pnpm dlx tsx --env-file=.env --watch src/index.ts",
-    "check-types": "tsc --noEmit"
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "check-types": "tsc --noEmit -p tsconfig.json"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@clerk/express": "^1.7.30",
-    "@repo/kafka": "workspace:*",
-    "@repo/product-db": "workspace:*",
     "cors": "^2.8.5",
-    "express": "^5.0.3"
+    "express": "^5.0.3",
+    "@repo/product-db": "workspace:*",
+    "@repo/kafka": "workspace:*"
   },
   "devDependencies": {
-    "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/types": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3"
   }
