@@ -32,12 +32,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-          cache-dependency-path: 'pnpm-lock.yaml'
 
+      # Cài pnpm toàn cục bằng npm (tránh lỗi corepack)
       - name: Install pnpm
         run: |
-          corepack enable
+          npm install -g pnpm
           pnpm --version
 
       # Cài dependencies cho toàn monorepo (pnpm workspace)
@@ -59,11 +58,12 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9403F89004084C538391FDC441E7A14A }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F721E8AD584453E88EA54CA66A1D308 }}
 
-      # Deploy thư mục client (đã build) lên App Service ecom-client-app
+      # Deploy: đứng trong thư mục client và deploy .
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
+        working-directory: ${{ env.APP_PATH }}
         with:
           app-name: 'ecom-client-app'
           slot-name: 'Production'
-          package: ${{ env.APP_PATH }}
+          package: .
