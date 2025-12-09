@@ -71,11 +71,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          # Nếu bạn làm riêng Service Principal cho client-app
-          # thì thay các secrets này bằng cặp tương ứng.
-           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1F8316319FD1434E83765B2026351D53 }}
-           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_133B340C342B42459460C06CE0F91336 }}
-           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D847B491616143199BB0B316CD77717A }}
+          client-id: '9e3e9206-0a99-4920-885f-b81c66912649'
+          tenant-id: '2dff09ac-2b3b-4182-9953-2b548e0d0b39'
+          subscription-id: 'e4b5ffa6-6c6d-432a-9ba4-755acad7faab'
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -85,3 +83,4 @@ jobs:
           slot-name: 'Production'
           # Sau khi download artifact, vẫn còn đúng cấu trúc backend/apps/client
           package: ${{ env.APP_PATH }}
+
