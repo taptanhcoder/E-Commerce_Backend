@@ -1,103 +1,53 @@
-name: Build and deploy client app (Next.js) to Azure Web App - ecom-client-app
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - ecom-client-app
 
 on:
   push:
     branches:
       - deployment
-    # Chỉ chạy khi code client hoặc file workflow này thay đổi
-    paths:
-      - 'backend/apps/client/**'
-      - '.github/workflows/deployment_ecom-client-app.yml'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-
-    # Toàn bộ biến môi trường cần cho bước build client
-    env:
-      APP_PATH: backend/apps/client
-      NODE_VERSION: '20.x'
-
-      # ===== Clerk =====
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-      CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
-      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /
-      NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /
-
-      # ===== Backend URLs (tạm thời là localhost) =====
-      NEXT_PUBLIC_PRODUCT_SERVICE_URL: "http://localhost:8000"
-      NEXT_PUBLIC_ORDER_SERVICE_URL: "http://localhost:8001"
-      NEXT_PUBLIC_PAYMENT_SERVICE_URL: "http://localhost:8002"
-      NEXT_PUBLIC_AUTH_SERVICE_URL: "http://localhost:8003"
-
-      # ===== Stripe =====
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      contents: read #This is required for actions/checkout
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20.x'
 
-      # Cài pnpm, dùng version trong "packageManager" của package.json
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
-      # Cài deps cho toàn monorepo (workspace)
-      - name: Install dependencies (monorepo)
-        run: pnpm install
-
-      # Cài deps riêng cho client để có node_modules và binary "next"
-      - name: Install client dependencies
+      - name: npm install, build, and test
         run: |
-          cd $APP_PATH
-          pnpm install
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
-      # Build client app (Next.js)
-      - name: Build client app
-        run: |
-          cd $APP_PATH
-          pnpm run build
-
-      # Tạo file ZIP chứa nội dung thư mục client, đặt ở root repo: client.zip
-      - name: Create deployment package
-        run: |
-          cd $APP_PATH
-          zip -r ../../client.zip .
-
-      # Upload client.zip làm artifact cho job deploy
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: client-app
-          path: client.zip
+          name: node-app
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: client-app
-          path: .
-
+          name: node-app
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -105,10 +55,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9403F89004084C538391FDC441E7A14A }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F721E8AD584453E88EA54CA66A1D308 }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'ecom-client-app'
           slot-name: 'Production'
-          package: client.zip
+          package: .
+          
