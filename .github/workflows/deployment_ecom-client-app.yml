@@ -1,92 +1,68 @@
-# Build & deploy ONLY the client app (Next.js) in a pnpm monorepo
-# App Service: ecom-client-app
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy client app (Next.js) to Azure Web App - ecom-client-app
+name: Build and deploy Node.js app to Azure Web App - ecom-client-app
 
 on:
   push:
     branches:
       - deployment
-    # Chỉ chạy khi code client hoặc file workflow này thay đổi
     paths:
-      - 'backend/apps/client/**'
-      - '.github/workflows/deployment_ecom-client-app.yml'
+      - 'backend/apps/product-service/**'
+      - '.github/workflows/deployment_ecom-product-service.yml'
   workflow_dispatch:
-
-env:
-  APP_PATH: backend/apps/client
-  NODE_VERSION: '20.x'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # required cho actions/checkout
+      contents: read #This is required for actions/checkout
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20.x'
 
-      # Cài pnpm bằng action chính thức
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      # Cài dependencies cho toàn monorepo (pnpm workspace)
-      - name: Install dependencies (monorepo)
-        run: pnpm install
-
-      # Build riêng client app (Next.js)
-      - name: Build client app
+      - name: npm install, build, and test
         run: |
-          cd $APP_PATH
-          pnpm run build
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
-      # Tạo file ZIP chứa nội dung thư mục client, đặt ở root repo: client.zip
-      - name: Create deployment package
-        run: |
-          cd $APP_PATH
-          zip -r ../../client.zip .
-
-      # Upload client.zip làm artifact cho job deploy
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: client-app
-          path: client.zip   # file client.zip đang nằm ở root repo
+          name: node-app
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write # required cho azure/login (OIDC)
-      contents: read  # required cho actions/checkout (nếu cần)
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: client-app
-          path: .   # tải client.zip về thư mục làm việc hiện tại (root)
-
+          name: node-app
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          # Giữ nguyên 3 secrets mà Azure đã tạo cho web app này
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A8C32A6EF75F4BEFBD55B517E23110A5 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9403F89004084C538391FDC441E7A14A }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F721E8AD584453E88EA54CA66A1D308 }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'ecom-client-app'
           slot-name: 'Production'
-          package: client.zip   # deploy đúng file ZIP đã build cho client
+          package: .
+          
