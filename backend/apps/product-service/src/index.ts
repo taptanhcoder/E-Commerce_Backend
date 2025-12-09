@@ -11,7 +11,7 @@ const app = express();
 app.use(
   cors({
     origin: ["http://localhost:3002", "http://localhost:3003"],
-    credentials: true,
+    credentials: true
   })
 );
 
@@ -42,10 +42,8 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 const start = async () => {
   try {
-    // Kết nối Kafka producer & consumer song song
     await Promise.all([producer.connect(), consumer.connect()]);
 
-    // Hỗ trợ PORT từ Azure, fallback 8000 cho local
     const port = process.env.PORT ? Number(process.env.PORT) : 8000;
 
     app.listen(port, () => {

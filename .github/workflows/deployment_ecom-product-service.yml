@@ -5,14 +5,11 @@ on:
     branches:
       - deployment
     paths:
-      # Service chính
       - 'backend/apps/product-service/**'
-      # Các package mà product-service phụ thuộc
       - 'backend/packages/product-db/**'
       - 'backend/packages/kafka/**'
       - 'backend/packages/types/**'
       - 'backend/packages/typescript-config/**'
-      # Bản thân workflow
       - '.github/workflows/deployment_ecom-product-service.yml'
   workflow_dispatch:
 
@@ -24,9 +21,6 @@ jobs:
 
     env:
       NODE_VERSION: '20.x'
-      APP_PATH: backend/apps/product-service
-
-      DATABASE_URL: ${{ secrets.PRODUCT_DB_URL }}
 
     steps:
       - name: Checkout repository
@@ -45,21 +39,7 @@ jobs:
       - name: Install dependencies (monorepo)
         run: pnpm install
 
-      # Build package @repo/product-db (bắt buộc)
-      - name: Build product-db package
-        run: pnpm --filter @repo/product-db run build
-
-      # Build @repo/kafka nếu có script build (tùy chọn)
-      - name: Build kafka package (if needed)
-        run: pnpm --filter @repo/kafka run build --if-present
-
-      # Build riêng product-service
-      - name: Build product service
-        run: |
-          cd $APP_PATH
-          pnpm run build
-
-      # Đóng gói toàn bộ repo sau khi build
+      # Không build TS nữa, chỉ đóng gói toàn bộ repo sau khi cài deps
       - name: Create deployment package
         run: |
           zip -r product-service.zip .
