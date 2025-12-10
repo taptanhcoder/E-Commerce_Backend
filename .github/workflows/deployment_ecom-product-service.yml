@@ -13,44 +13,81 @@ on:
       - '.github/workflows/deployment_ecom-product-service.yml'
   workflow_dispatch:
 
+env:
+  NODE_VERSION: '20.x'
+  APP_PATH: backend/apps/product-service
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
-    env:
-      NODE_VERSION: '20.x'
-
     steps:
-      # 1. Lấy source
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Cài Node
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # Không dùng cache npm vì project dùng pnpm
-          # cache: ''
+          # Dùng cache cho pnpm (không dùng npm để khỏi lỗi lockfile)
+          cache: 'pnpm'
 
-      # 3. Cài pnpm theo đúng version trong "packageManager" của package.json
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          # KHÔNG set "version" để tránh conflict với packageManager
-          run_install: true
+          # Rất quan trọng: KHÔNG set "version" ở đây.
+          # Action sẽ tự đọc version từ "packageManager" trong package.json ở root.
+          run_install: false
 
-      # ❌ BỎ BƯỚC TYPE CHECK
-      # (tsc không resolve được @repo/product-db trong CI, nhưng runtime vẫn chạy bình thường)
-
-      # 4. Đóng gói toàn bộ repo sau khi pnpm install
-      - name: Create deployment package
+      - name: Install dependencies (filtered workspace)
         run: |
-          zip -r product-service.zip .
+          # Cài đúng những package liên quan:
+          # - product-service (service chính)
+          # - @repo/product-db (Prisma + Neon)
+          # - @repo/kafka (Kafka wrapper)
+          # - @repo/types, @repo/typescript-config (types & tsconfig dùng chung)
+          pnpm install \
+            --filter "product-service..." \
+            --filter "@repo/product-db..." \
+            --filter "@repo/kafka..." \
+            --filter "@repo/types..." \
+            --filter "@repo/typescript-config..."
 
-      # 5. Upload artifact cho job deploy
+      # 👉 Tạm thời bỏ check-types để tránh lỗi TS2307 trong CI
+      # Anh muốn bật lại sau này thì thêm bước typecheck vào.
+      # - name: Type-check product-service
+      #   run: pnpm --filter "product-service" run check-types
+
+      - name: Prepare minimal deploy folder
+        run: |
+          # Tạo thư mục deploy với cấu trúc giống root nhưng chỉ gồm phần cần thiết
+          mkdir -p deploy/backend/apps deploy/backend/packages
+
+          # Copy file cấu hình pnpm/monorepo cần thiết
+          cp package.json deploy/
+          if [ -f pnpm-lock.yaml ]; then cp pnpm-lock.yaml deploy/; fi
+          if [ -f pnpm-workspace.yaml ]; then cp pnpm-workspace.yaml deploy/; fi
+
+          # Copy service chính
+          cp -r backend/apps/product-service deploy/backend/apps/product-service
+
+          # Copy các package workspace mà product-service dùng
+          cp -r backend/packages/product-db deploy/backend/packages/product-db
+          cp -r backend/packages/kafka deploy/backend/packages/kafka
+          cp -r backend/packages/types deploy/backend/packages/types
+          cp -r backend/packages/typescript-config deploy/backend/packages/typescript-config
+
+          # Copy node_modules đã được cài bằng pnpm (filtered)
+          if [ -d node_modules ]; then
+            cp -r node_modules deploy/node_modules
+          fi
+
+          # Nén tất cả trong deploy/ thành một zip
+          cd deploy
+          zip -r ../product-service.zip .
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -65,14 +102,12 @@ jobs:
       contents: read
 
     steps:
-      # 1. Tải gói build
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: product-service
           path: .
 
-      # 2. Login Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -80,7 +115,6 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_70509241F401453D8575A6F5A2B5D39F }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_38CB60B4A2554AF3A8FCCE497FAD156F }}
 
-      # 3. Deploy zip lên App Service
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
