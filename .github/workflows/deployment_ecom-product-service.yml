@@ -30,16 +30,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+      # Quan trọng: dùng npm để tạo node_modules layout chuẩn cho Azure
+      - name: Install dependencies with npm
+        run: npm ci
 
-      - name: Install dependencies (monorepo)
-        run: pnpm install
-
-      # Không build TS nữa, chỉ đóng gói toàn bộ repo sau khi cài deps
+      # Đóng gói toàn repo + node_modules
       - name: Create deployment package
         run: |
           zip -r product-service.zip .
