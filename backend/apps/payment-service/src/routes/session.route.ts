@@ -1,3 +1,4 @@
+// backend/apps/payment-service/src/routes/session.route.ts
 import { Hono } from "hono";
 import stripe from "../utils/stripe";
 import { shouldBeUser } from "../middleware/authMiddleware";
@@ -5,13 +6,19 @@ import { CartItemsType } from "@repo/types";
 
 const sessionRoute = new Hono();
 
+// URL trả về sau khi thanh toán Stripe
+// Production: thiết lập CLIENT_RETURN_URL trong env (Azure App Settings)
+// Dev: fallback localhost:3002
+const CLIENT_RETURN_URL =
+  process.env.CLIENT_RETURN_URL ??
+  "http://localhost:3002/return?session_id={CHECKOUT_SESSION_ID}";
+
 sessionRoute.post("/create-checkout-session", shouldBeUser, async (c) => {
   const { cart }: { cart: CartItemsType } = await c.req.json();
   const userId = c.get("userId");
 
   try {
     const lineItems = cart.map((item) => {
-  
       const unitAmount = item.price * 100;
 
       if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
@@ -41,8 +48,7 @@ sessionRoute.post("/create-checkout-session", shouldBeUser, async (c) => {
       client_reference_id: userId,
       mode: "payment",
       ui_mode: "custom",
-      return_url:
-        "http://localhost:3002/return?session_id={CHECKOUT_SESSION_ID}",
+      return_url: CLIENT_RETURN_URL,
     });
 
     console.log("[create-checkout-session] Created session:", session.id);
