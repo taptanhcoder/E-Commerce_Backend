@@ -13,39 +13,48 @@ on:
       - '.github/workflows/deployment_ecom-product-service.yml'
   workflow_dispatch:
 
-env:
-  NODE_VERSION: '20.x'
-
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
+    env:
+      NODE_VERSION: '20.x'
+
     steps:
+      # 1. Lấy source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Cài Node
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: 'pnpm-lock.yaml'
+          # KHÔNG dùng cache ở đây nữa, tránh lỗi thiếu lockfile npm/yarn
+          # cache: ''  # để trống
 
+      # 3. Cài pnpm CLI + tự động pnpm install theo pnpm-lock.yaml
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9 # hoặc 8 nếu project bạn đang dùng pnpm 8
-          run_install: false
+          version: 9
+          run_install: true
 
-      - name: Install dependencies (monorepo)
-        run: pnpm install
+      # 4. (Tuỳ chọn) Check type cho product-service để chắc code TypeScript OK
+      - name: Type check product-service
+        run: |
+          cd backend/apps/product-service
+          pnpm run check-types
 
+      # 5. Đóng gói toàn bộ repo sau khi đã pnpm install
       - name: Create deployment package
         run: |
           zip -r product-service.zip .
+        # working-directory mặc định là root repo, nên zip toàn bộ
 
+      # 6. Upload artifact cho job deploy
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -60,12 +69,14 @@ jobs:
       contents: read
 
     steps:
+      # 1. Tải artifact đã build
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: product-service
           path: .
 
+      # 2. Login Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -73,6 +84,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_70509241F401453D8575A6F5A2B5D39F }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_38CB60B4A2554AF3A8FCCE497FAD156F }}
 
+      # 3. Deploy gói zip lên App Service
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
