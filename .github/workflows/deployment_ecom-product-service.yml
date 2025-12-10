@@ -23,7 +23,7 @@ jobs:
       NODE_VERSION: '20.x'
 
     steps:
-      # 1. Lấy source code
+      # 1. Checkout mã nguồn
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -32,17 +32,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # KHÔNG dùng cache ở đây nữa, tránh lỗi thiếu lockfile npm/yarn
-          # cache: ''  # để trống
+          # Không bật cache npm, repo đang dùng pnpm
+          # cache: ''
 
-      # 3. Cài pnpm CLI + tự động pnpm install theo pnpm-lock.yaml
+      # 3. Cài pnpm theo đúng packageManager trong package.json
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          # KHÔNG set "version" nữa, để action tự đọc từ packageManager
           run_install: true
 
-      # 4. (Tuỳ chọn) Check type cho product-service để chắc code TypeScript OK
+      # 4. (Tuỳ chọn) check type cho product-service
       - name: Type check product-service
         run: |
           cd backend/apps/product-service
@@ -52,7 +52,6 @@ jobs:
       - name: Create deployment package
         run: |
           zip -r product-service.zip .
-        # working-directory mặc định là root repo, nên zip toàn bộ
 
       # 6. Upload artifact cho job deploy
       - name: Upload artifact for deployment job
@@ -76,7 +75,7 @@ jobs:
           name: product-service
           path: .
 
-      # 2. Login Azure
+      # 2. Login vào Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
