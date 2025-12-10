@@ -15,7 +15,6 @@ on:
 
 env:
   NODE_VERSION: '20.x'
-  APP_PATH: backend/apps/product-service
 
 jobs:
   build:
@@ -31,45 +30,33 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # KHÔNG dùng cache: 'pnpm' để tránh lỗi cần pnpm trước khi cài
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Không set "version" → tự đọc từ "packageManager" trong package.json root
+          # Không tự install, mình sẽ tự gọi lệnh install
           run_install: false
 
-      - name: Install workspace dependencies (filtered)
+      - name: Install dependencies for whole workspace (no frozen lockfile)
         run: |
-          pnpm install \
-            --filter "product-service..." \
-            --filter "@repo/product-db..." \
-            --filter "@repo/kafka..." \
-            --filter "@repo/types..." \
-            --filter "@repo/typescript-config..."
+          pnpm install --no-frozen-lockfile
 
-      - name: Install runtime deps for product-service (local node_modules)
+      - name: Type-check product-service
         run: |
           cd backend/apps/product-service
-          pnpm install --prod
+          pnpm run check-types
 
-      # Nếu sau này anh muốn bật lại type-check thì mở comment đoạn này
-      # - name: Type-check product-service
-      #   run: |
-      #     cd backend/apps/product-service
-      #     pnpm run check-types
-
-      - name: Prepare minimal deploy folder
+      - name: Prepare minimal deploy folder (sources only)
         run: |
-          # Tạo thư mục deploy riêng
+          # Tạo thư mục deploy root
           mkdir -p deploy/backend/apps deploy/backend/packages
 
-          # Copy file cấu hình pnpm/mono-repo
+          # Copy file cấu hình root để Azure/Oryx biết cách build
           cp package.json deploy/
           if [ -f pnpm-lock.yaml ]; then cp pnpm-lock.yaml deploy/; fi
           if [ -f pnpm-workspace.yaml ]; then cp pnpm-workspace.yaml deploy/; fi
 
-          # Copy service chính (bao gồm node_modules cục bộ vừa cài ở trên)
+          # Copy source của product-service
           cp -r backend/apps/product-service deploy/backend/apps/product-service
 
           # Copy các package mà product-service dùng
@@ -78,12 +65,8 @@ jobs:
           cp -r backend/packages/types deploy/backend/packages/types
           cp -r backend/packages/typescript-config deploy/backend/packages/typescript-config
 
-          # Copy node_modules root (để Oryx tạo node_modules.tar.gz như bình thường)
-          if [ -d node_modules ]; then
-            cp -r node_modules deploy/node_modules
-          fi
-
-          # Nén tất cả trong deploy/ thành file zip để đưa lên Azure
+          # KHÔNG copy node_modules (để Azure tự pnpm install)
+          # Đóng gói nội dung trong thư mục deploy thành file zip
           cd deploy
           zip -r ../product-service.zip .
 
