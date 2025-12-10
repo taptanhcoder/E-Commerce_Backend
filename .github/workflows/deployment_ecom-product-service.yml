@@ -36,12 +36,12 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: 9 # hoặc 8 nếu project bạn đang dùng pnpm 8
           run_install: false
 
       - name: Install dependencies (monorepo)
         run: pnpm install
 
-      # Đóng gói toàn bộ repo (kèm node_modules) để chạy product-service bằng tsx
       - name: Create deployment package
         run: |
           zip -r product-service.zip .
