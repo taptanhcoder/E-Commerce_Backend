@@ -13,14 +13,14 @@ on:
       - '.github/workflows/deployment_ecom-product-service.yml'
   workflow_dispatch:
 
+env:
+  NODE_VERSION: '20.x'
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
-    env:
-      NODE_VERSION: '20.x'
 
     steps:
       - name: Checkout repository
@@ -30,7 +30,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -40,7 +41,7 @@ jobs:
       - name: Install dependencies (monorepo)
         run: pnpm install
 
-      # Đóng gói toàn bộ repo sau khi cài deps
+      # Đóng gói toàn bộ repo (kèm node_modules) để chạy product-service bằng tsx
       - name: Create deployment package
         run: |
           zip -r product-service.zip .

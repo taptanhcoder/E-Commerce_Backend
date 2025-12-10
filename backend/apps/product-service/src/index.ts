@@ -2,22 +2,15 @@ import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { shouldBeUser } from "./middleware/authMiddleware.js";
-import productRouter from "./routes/product.route";
-import categoryRouter from "./routes/category.route";
+import productRouter from "./routes/product.route.js";
+import categoryRouter from "./routes/category.route.js";
 import { consumer, producer } from "./utils/kafka.js";
 
 const app = express();
 
-// CORS: lấy từ ENV, fallback cho dev
-const allowedOrigins = (process.env.CORS_ORIGINS ?? "")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
-
 app.use(
   cors({
-    // Nếu không set CORS_ORIGINS thì cho phép tất cả (dev)
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: ["http://localhost:3002", "http://localhost:3003"],
     credentials: true,
   })
 );
@@ -33,7 +26,7 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
-app.get("/test", shouldBeUser, (req, res) => {
+app.get("/test", shouldBeUser, (req: Request, res: Response) => {
   res.json({ message: "product service authenticated", userId: req.userId });
 });
 
@@ -41,7 +34,7 @@ app.use("/products", productRouter);
 app.use("/categories", categoryRouter);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error(err);
+  console.log(err);
   return res
     .status(err.status || 500)
     .json({ message: err.message || "Inter Server Error!" });
@@ -49,16 +42,15 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 const start = async () => {
   try {
-    // Không await bên trong Promise.all
     await Promise.all([producer.connect(), consumer.connect()]);
 
-    const port = Number(process.env.PORT) || 8000;
+    const port = process.env.PORT ? Number(process.env.PORT) : 8000;
 
     app.listen(port, () => {
       console.log(`product service is running on port ${port}`);
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     process.exit(1);
   }
 };
