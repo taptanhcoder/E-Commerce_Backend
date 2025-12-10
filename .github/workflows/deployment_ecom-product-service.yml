@@ -31,23 +31,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # Dùng cache cho pnpm (không dùng npm để khỏi lỗi lockfile)
-          cache: 'pnpm'
+          # KHÔNG dùng cache: 'pnpm' nữa để tránh cần pnpm trước khi cài
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Rất quan trọng: KHÔNG set "version" ở đây.
-          # Action sẽ tự đọc version từ "packageManager" trong package.json ở root.
+          # Không set "version" để action tự đọc từ "packageManager" trong package.json root
           run_install: false
 
       - name: Install dependencies (filtered workspace)
         run: |
-          # Cài đúng những package liên quan:
-          # - product-service (service chính)
-          # - @repo/product-db (Prisma + Neon)
-          # - @repo/kafka (Kafka wrapper)
-          # - @repo/types, @repo/typescript-config (types & tsconfig dùng chung)
+          # Cài đúng workspace cần cho product-service
           pnpm install \
             --filter "product-service..." \
             --filter "@repo/product-db..." \
@@ -55,17 +49,19 @@ jobs:
             --filter "@repo/types..." \
             --filter "@repo/typescript-config..."
 
-      # 👉 Tạm thời bỏ check-types để tránh lỗi TS2307 trong CI
-      # Anh muốn bật lại sau này thì thêm bước typecheck vào.
+      # TẠM THỜI bỏ type-check để tránh fail do TS không resolve được module trong CI
+      # Nếu sau này anh muốn bật lại, chỉ cần bỏ comment đoạn này:
       # - name: Type-check product-service
-      #   run: pnpm --filter "product-service" run check-types
+      #   run: |
+      #     cd backend/apps/product-service
+      #     pnpm run check-types
 
       - name: Prepare minimal deploy folder
         run: |
-          # Tạo thư mục deploy với cấu trúc giống root nhưng chỉ gồm phần cần thiết
+          # Tạo thư mục deploy chỉ chứa những thứ cần thiết
           mkdir -p deploy/backend/apps deploy/backend/packages
 
-          # Copy file cấu hình pnpm/monorepo cần thiết
+          # Copy file cấu hình pnpm/mono-repo
           cp package.json deploy/
           if [ -f pnpm-lock.yaml ]; then cp pnpm-lock.yaml deploy/; fi
           if [ -f pnpm-workspace.yaml ]; then cp pnpm-workspace.yaml deploy/; fi
@@ -73,18 +69,18 @@ jobs:
           # Copy service chính
           cp -r backend/apps/product-service deploy/backend/apps/product-service
 
-          # Copy các package workspace mà product-service dùng
+          # Copy các package mà product-service dùng
           cp -r backend/packages/product-db deploy/backend/packages/product-db
           cp -r backend/packages/kafka deploy/backend/packages/kafka
           cp -r backend/packages/types deploy/backend/packages/types
           cp -r backend/packages/typescript-config deploy/backend/packages/typescript-config
 
-          # Copy node_modules đã được cài bằng pnpm (filtered)
+          # Copy node_modules đã cài bằng pnpm
           if [ -d node_modules ]; then
             cp -r node_modules deploy/node_modules
           fi
 
-          # Nén tất cả trong deploy/ thành một zip
+          # Nén tất cả trong deploy/ thành file zip để đưa lên Azure
           cd deploy
           zip -r ../product-service.zip .
 
