@@ -31,17 +31,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # KHÔNG dùng cache: 'pnpm' nữa để tránh cần pnpm trước khi cài
+          # KHÔNG dùng cache: 'pnpm' để tránh lỗi cần pnpm trước khi cài
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Không set "version" để action tự đọc từ "packageManager" trong package.json root
+          # Không set "version" → tự đọc từ "packageManager" trong package.json root
           run_install: false
 
-      - name: Install dependencies (filtered workspace)
+      - name: Install workspace dependencies (filtered)
         run: |
-          # Cài đúng workspace cần cho product-service
           pnpm install \
             --filter "product-service..." \
             --filter "@repo/product-db..." \
@@ -49,8 +48,12 @@ jobs:
             --filter "@repo/types..." \
             --filter "@repo/typescript-config..."
 
-      # TẠM THỜI bỏ type-check để tránh fail do TS không resolve được module trong CI
-      # Nếu sau này anh muốn bật lại, chỉ cần bỏ comment đoạn này:
+      - name: Install runtime deps for product-service (local node_modules)
+        run: |
+          cd backend/apps/product-service
+          pnpm install --prod
+
+      # Nếu sau này anh muốn bật lại type-check thì mở comment đoạn này
       # - name: Type-check product-service
       #   run: |
       #     cd backend/apps/product-service
@@ -58,7 +61,7 @@ jobs:
 
       - name: Prepare minimal deploy folder
         run: |
-          # Tạo thư mục deploy chỉ chứa những thứ cần thiết
+          # Tạo thư mục deploy riêng
           mkdir -p deploy/backend/apps deploy/backend/packages
 
           # Copy file cấu hình pnpm/mono-repo
@@ -66,7 +69,7 @@ jobs:
           if [ -f pnpm-lock.yaml ]; then cp pnpm-lock.yaml deploy/; fi
           if [ -f pnpm-workspace.yaml ]; then cp pnpm-workspace.yaml deploy/; fi
 
-          # Copy service chính
+          # Copy service chính (bao gồm node_modules cục bộ vừa cài ở trên)
           cp -r backend/apps/product-service deploy/backend/apps/product-service
 
           # Copy các package mà product-service dùng
@@ -75,7 +78,7 @@ jobs:
           cp -r backend/packages/types deploy/backend/packages/types
           cp -r backend/packages/typescript-config deploy/backend/packages/typescript-config
 
-          # Copy node_modules đã cài bằng pnpm
+          # Copy node_modules root (để Oryx tạo node_modules.tar.gz như bình thường)
           if [ -d node_modules ]; then
             cp -r node_modules deploy/node_modules
           fi
