@@ -21,10 +21,12 @@
   },
   "dependencies": {
     "@clerk/fastify": "^2.6.5",
+    "@fastify/swagger": "^9.6.1",
+    "@fastify/swagger-ui": "^5.2.3",
+    "@repo/kafka": "workspace:*",
     "@repo/order-db": "workspace:*",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
-    "fastify": "^5.6.2",
-    "@repo/kafka": "workspace:*"
+    "fastify": "^5.6.2"
   }
 }

@@ -13,14 +13,18 @@
   "license": "ISC",
   "dependencies": {
     "@clerk/express": "^1.7.30",
+    "@repo/kafka": "workspace:*",
     "cors": "^2.8.5",
     "express": "^5.0.3",
-    "@repo/kafka": "workspace:*"
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
     "@repo/types": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3"
+    "@types/express": "^5.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8"
   }
 }
